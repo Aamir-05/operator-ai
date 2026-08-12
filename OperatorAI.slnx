@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Operator.AI/Operator.AI.csproj" />
+  <Project Path="Operator.Desktop/Operator.Desktop.csproj" />
+  <Project Path="Operator.Tools/Operator.Tools.csproj" />
+</Solution>
