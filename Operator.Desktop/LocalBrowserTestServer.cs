@@ -12,9 +12,7 @@ public sealed class LocalBrowserTestServer :
     IAsyncDisposable
 {
     private TcpListener? _listener;
-
     private CancellationTokenSource? _cancellation;
-
     private Task? _serverTask;
 
     public string BaseUrl
@@ -49,8 +47,7 @@ public sealed class LocalBrowserTestServer :
             _listener.Start();
 
             IPEndPoint endpoint =
-                (IPEndPoint)
-                _listener.LocalEndpoint;
+                (IPEndPoint)_listener.LocalEndpoint;
 
             BaseUrl =
                 $"http://127.0.0.1:{endpoint.Port}";
@@ -86,8 +83,7 @@ public sealed class LocalBrowserTestServer :
             return;
         }
 
-        while (!cancellationToken
-            .IsCancellationRequested)
+        while (!cancellationToken.IsCancellationRequested)
         {
             try
             {
@@ -131,8 +127,7 @@ public sealed class LocalBrowserTestServer :
             }
             catch
             {
-                if (cancellationToken
-                    .IsCancellationRequested)
+                if (cancellationToken.IsCancellationRequested)
                 {
                     break;
                 }
@@ -171,8 +166,7 @@ public sealed class LocalBrowserTestServer :
                     cancellationToken
                 );
 
-            if (string.IsNullOrWhiteSpace(
-                    request))
+            if (string.IsNullOrWhiteSpace(request))
             {
                 return;
             }
@@ -204,6 +198,18 @@ public sealed class LocalBrowserTestServer :
                         0,
                         queryIndex
                     );
+            }
+
+            if (path.Equals(
+                    "/vision-fallback",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                await SendVisionFallbackPageAsync(
+                    stream,
+                    cancellationToken
+                );
+
+                return;
             }
 
             if (path.Equals(
@@ -250,7 +256,7 @@ public sealed class LocalBrowserTestServer :
     }
 
     // =========================================================
-    // READ HTTP REQUEST
+    // READ REQUEST
     // =========================================================
 
     private static async Task<string> ReadRequestAsync(
@@ -305,7 +311,7 @@ public sealed class LocalBrowserTestServer :
     }
 
     // =========================================================
-    // MAIN TEST PAGE
+    // MAIN 0.6E TEST PAGE
     // =========================================================
 
     private static async Task SendMainPageAsync(
@@ -315,7 +321,6 @@ public sealed class LocalBrowserTestServer :
         string html =
             """
             <!DOCTYPE html>
-
             <html lang="en">
 
             <head>
@@ -428,10 +433,6 @@ public sealed class LocalBrowserTestServer :
                     Local Version 0.6E deterministic test page
                 </div>
 
-                <!-- ========================================= -->
-                <!-- ROLE / VALUE TEST                         -->
-                <!-- ========================================= -->
-
                 <div class="card">
 
                     <label for="testInput">
@@ -450,10 +451,6 @@ public sealed class LocalBrowserTestServer :
                     </div>
 
                 </div>
-
-                <!-- ========================================= -->
-                <!-- EXACT TEXT / TEXT / ATTRIBUTE TEST        -->
-                <!-- ========================================= -->
 
                 <div class="card">
 
@@ -479,10 +476,6 @@ public sealed class LocalBrowserTestServer :
 
                 </div>
 
-                <!-- ========================================= -->
-                <!-- DYNAMIC VISIBILITY / WAIT TEST            -->
-                <!-- ========================================= -->
-
                 <div class="card">
 
                     <button
@@ -498,10 +491,6 @@ public sealed class LocalBrowserTestServer :
                     </div>
 
                 </div>
-
-                <!-- ========================================= -->
-                <!-- 0.6D CONTROLS                             -->
-                <!-- ========================================= -->
 
                 <div class="card">
 
@@ -586,10 +575,6 @@ public sealed class LocalBrowserTestServer :
 
                 </div>
 
-                <!-- ========================================= -->
-                <!-- SCROLL TEST                               -->
-                <!-- ========================================= -->
-
                 <h2>
                     Scroll Test
                 </h2>
@@ -597,14 +582,9 @@ public sealed class LocalBrowserTestServer :
                 <div class="spacer">
                 </div>
 
-                <div
-                    id="bottomTarget">
+                <div id="bottomTarget">
                     Bottom Target Reached
                 </div>
-
-                <!-- ========================================= -->
-                <!-- URL NAVIGATION TEST                       -->
-                <!-- ========================================= -->
 
                 <a
                     id="nextLink"
@@ -756,6 +736,271 @@ public sealed class LocalBrowserTestServer :
     }
 
     // =========================================================
+    // VERSION 0.6F
+    // VISUAL FALLBACK PAGE
+    //
+    // Important:
+    // The 3 buttons have:
+    //
+    // - no text
+    // - no aria-label
+    // - no title
+    // - no id
+    // - no name
+    //
+    // Their visible labels exist only inside CSS background SVGs.
+    // =========================================================
+
+    private static async Task SendVisionFallbackPageAsync(
+        NetworkStream stream,
+        CancellationToken cancellationToken)
+    {
+        string html =
+            """
+            <!DOCTYPE html>
+
+            <html lang="en">
+
+            <head>
+
+                <meta charset="utf-8">
+
+                <title>
+                    Operator AI Vision Fallback Test
+                </title>
+
+                <style>
+
+                    body {
+                        font-family: Segoe UI, Arial, sans-serif;
+                        margin: 0;
+                        padding: 0;
+                        background: #f6f7f9;
+                    }
+
+                    .page {
+                        width: 920px;
+                        margin: 55px auto;
+                    }
+
+                    .header {
+                        margin-bottom: 28px;
+                    }
+
+                    h1 {
+                        margin-bottom: 8px;
+                        font-size: 34px;
+                    }
+
+                    .subtitle {
+                        color: #555;
+                    }
+
+                    .panel {
+                        background: white;
+                        border: 1px solid #c9cdd3;
+                        border-radius: 12px;
+                        padding: 34px;
+                        box-shadow: 0 3px 16px rgba(0,0,0,0.08);
+                    }
+
+                    .warning {
+                        border-left: 5px solid #555;
+                        padding: 15px 18px;
+                        background: #fafafa;
+                        margin-bottom: 30px;
+                    }
+
+                    #mysteryButtons {
+                        display: flex;
+                        gap: 22px;
+                        justify-content: center;
+                        margin-top: 30px;
+                        margin-bottom: 28px;
+                    }
+
+                    .visual-choice {
+                        width: 210px;
+                        height: 64px;
+                        border: 0;
+                        padding: 0;
+                        background-color: transparent;
+                        background-repeat: no-repeat;
+                        background-position: center;
+                        background-size: 210px 64px;
+                        cursor: pointer;
+                    }
+
+                    /*
+                       LEFT BUTTON
+                       Visible label exists only in this background image.
+                    */
+
+                    #mysteryButtons button:nth-child(1) {
+                        background-image:
+                            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='210' height='64'%3E%3Crect width='210' height='64' rx='8' fill='%23f1f1f1' stroke='%23777'/%3E%3Ctext x='105' y='39' font-family='Segoe UI,Arial' font-size='18' text-anchor='middle' fill='%23111'%3ECancel%3C/text%3E%3C/svg%3E");
+                    }
+
+                    /*
+                       MIDDLE BUTTON
+                       This is the target.
+                    */
+
+                    #mysteryButtons button:nth-child(2) {
+                        background-image:
+                            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='210' height='64'%3E%3Crect width='210' height='64' rx='8' fill='%23dce9ff' stroke='%23506ca8'/%3E%3Ctext x='105' y='39' font-family='Segoe UI,Arial' font-size='18' text-anchor='middle' fill='%23111'%3EContinue%20Review%3C/text%3E%3C/svg%3E");
+                    }
+
+                    /*
+                       RIGHT BUTTON
+                    */
+
+                    #mysteryButtons button:nth-child(3) {
+                        background-image:
+                            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='210' height='64'%3E%3Crect width='210' height='64' rx='8' fill='%23f1f1f1' stroke='%23777'/%3E%3Ctext x='105' y='39' font-family='Segoe UI,Arial' font-size='18' text-anchor='middle' fill='%23111'%3EDefer%3C/text%3E%3C/svg%3E");
+                    }
+
+                    #fallbackStatus {
+                        margin-top: 25px;
+                        padding: 14px;
+                        border: 1px solid #aaa;
+                        font-family: Consolas, monospace;
+                        background: #fafafa;
+                    }
+
+                    .explanation {
+                        color: #555;
+                        font-size: 14px;
+                        margin-top: 20px;
+                    }
+
+                </style>
+
+            </head>
+
+            <body>
+
+                <div class="page">
+
+                    <div class="header">
+
+                        <h1>
+                            Operator AI Vision Fallback Test
+                        </h1>
+
+                        <div class="subtitle">
+                            Version 0.6F controlled visual recovery test
+                        </div>
+
+                    </div>
+
+                    <div class="panel">
+
+                        <div class="warning">
+
+                            <strong>
+                                Approval review
+                            </strong>
+
+                            <br>
+
+                            Choose the visually labeled action required
+                            to continue the review workflow.
+
+                        </div>
+
+                        <div id="mysteryButtons">
+
+                            <button
+                                class="visual-choice"
+                                type="button">
+                            </button>
+
+                            <button
+                                class="visual-choice"
+                                type="button">
+                            </button>
+
+                            <button
+                                class="visual-choice"
+                                type="button">
+                            </button>
+
+                        </div>
+
+                        <div id="fallbackStatus">
+                            Result: no action yet
+                        </div>
+
+                        <div class="explanation">
+
+                            The buttons intentionally contain no DOM text,
+                            accessible name, title, id or name.
+
+                            Their visible labels are rendered only as images.
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <script>
+
+                    const buttons =
+                        document.querySelectorAll(
+                            "#mysteryButtons button"
+                        );
+
+                    const status =
+                        document.getElementById(
+                            "fallbackStatus"
+                        );
+
+                    buttons[0].addEventListener(
+                        "click",
+                        () => {
+                            status.textContent =
+                                "Result: cancel selected";
+                        }
+                    );
+
+                    buttons[1].addEventListener(
+                        "click",
+                        () => {
+                            status.textContent =
+                                "Result: review mode activated";
+                        }
+                    );
+
+                    buttons[2].addEventListener(
+                        "click",
+                        () => {
+                            status.textContent =
+                                "Result: defer selected";
+                        }
+                    );
+
+                </script>
+
+            </body>
+
+            </html>
+            """;
+
+        await SendResponseAsync(
+            stream,
+            "200 OK",
+            "text/html; charset=utf-8",
+            Encoding.UTF8.GetBytes(
+                html
+            ),
+            null,
+            cancellationToken
+        );
+    }
+
+    // =========================================================
     // NEXT PAGE
     // =========================================================
 
@@ -777,42 +1022,27 @@ public sealed class LocalBrowserTestServer :
                     Operator AI Navigation Complete
                 </title>
 
-                <style>
-
-                    body {
-                        font-family: Segoe UI, Arial, sans-serif;
-                        max-width: 760px;
-                        margin: 80px auto;
-                        padding: 30px;
-                    }
-
-                    .complete {
-                        border: 2px solid #555;
-                        padding: 25px;
-                        border-radius: 8px;
-                    }
-
-                </style>
-
             </head>
 
-            <body>
+            <body
+                style="
+                    font-family:Segoe UI,Arial,sans-serif;
+                    max-width:760px;
+                    margin:80px auto;
+                    padding:30px;
+                ">
 
-                <div class="complete">
+                <h1>
+                    Navigation Complete
+                </h1>
 
-                    <h1>
-                        Navigation Complete
-                    </h1>
+                <p id="navigationResult">
+                    Operator AI successfully reached the next page.
+                </p>
 
-                    <p id="navigationResult">
-                        Operator AI successfully reached the next page.
-                    </p>
-
-                    <a href="/">
-                        Return to test page
-                    </a>
-
-                </div>
+                <a href="/">
+                    Return to test page
+                </a>
 
             </body>
 
@@ -843,12 +1073,9 @@ public sealed class LocalBrowserTestServer :
             """
             Operator AI Browser Controls Test Report
 
-            Version: 0.6E
+            Version: 0.6F
 
             Result: Browser download system is working.
-
-            This file was downloaded automatically
-            by Operator AI through Playwright.
             """;
 
         byte[] bytes =
@@ -867,7 +1094,7 @@ public sealed class LocalBrowserTestServer :
     }
 
     // =========================================================
-    // EMPTY
+    // EMPTY RESPONSE
     // =========================================================
 
     private static async Task SendEmptyResponseAsync(
@@ -988,7 +1215,6 @@ public sealed class LocalBrowserTestServer :
         }
 
         _listener = null;
-
         _serverTask = null;
 
         if (_cancellation != null)
