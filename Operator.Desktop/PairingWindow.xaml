@@ -1,0 +1,41 @@
+<Window x:Class="Operator.Desktop.PairingWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Pair Operator AI Mobile"
+        Width="540"
+        Height="590"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        Background="#F3F5F7">
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,18">
+            <TextBlock Text="Pair Mobile Device" FontSize="26" FontWeight="Bold"/>
+            <TextBlock Text="Scan the QR code in Operator AI Mobile."
+                       Foreground="#64748B" Margin="0,5,0,0"/>
+        </StackPanel>
+
+        <Border Grid.Row="1" Background="White" BorderBrush="#E5E7EB"
+                BorderThickness="1" CornerRadius="12" Padding="20">
+            <StackPanel HorizontalAlignment="Center">
+                <Image x:Name="QrImage" Width="280" Height="280" Stretch="Uniform" Margin="0,0,0,15"/>
+                <TextBlock Text="Pairing code" HorizontalAlignment="Center" Foreground="#64748B"/>
+                <TextBlock x:Name="PairCodeText" Text="------" FontFamily="Consolas"
+                           FontSize="34" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,5,0,15"/>
+                <TextBlock x:Name="PairingStatusText" Text="Starting pairing session..."
+                           TextWrapping="Wrap" TextAlignment="Center" Foreground="#334155"/>
+                <TextBlock x:Name="PairUriText" TextWrapping="Wrap" TextAlignment="Center"
+                           FontSize="11" Foreground="#94A3B8" Margin="0,15,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <Button Grid.Row="2" Content="Close" Width="110" Height="38"
+                HorizontalAlignment="Right" Margin="0,18,0,0" IsCancel="True"/>
+    </Grid>
+</Window>

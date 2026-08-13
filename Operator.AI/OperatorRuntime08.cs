@@ -8,7 +8,7 @@ namespace Operator.AI;
 
 public sealed class OperatorSettings
 {
-    public const string ProductVersion = "0.8.0";
+    public const string ProductVersion = "1.0.0";
 
     public string Model { get; set; } = "gpt-5.6";
 

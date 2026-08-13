@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "Operator AI",
+    "slug": "operator-ai-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "operatorai",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "ai.operator.mobile"
+    },
+    "android": {
+      "package": "ai.operator.mobile"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Operator AI to scan PC pairing QR codes.",
+          "barcodeScannerEnabled": true
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow Operator AI to record voice commands.",
+          "enableBackgroundRecording": false
+        }
+      ],
+      "expo-notifications",
+      "expo-secure-store"
+    ]
+  }
+}

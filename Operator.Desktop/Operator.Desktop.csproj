@@ -5,22 +5,25 @@
     <ProjectReference Include="..\Operator.Tools\Operator.Tools.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="QRCoder" Version="1.6.0" />
+  </ItemGroup>
+
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
 
-    <Version>0.8.0</Version>
-    <AssemblyVersion>0.8.0.0</AssemblyVersion>
-    <FileVersion>0.8.0.0</FileVersion>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
     <Product>Operator AI</Product>
     <Company>Operator AI</Company>
-    <Description>Unified Windows and browser automation agent.</Description>
+    <Description>Unified Windows/browser automation agent with secure mobile remote control.</Description>
     <Deterministic>true</Deterministic>
-
-    <!-- Playwright browser assets are easier to manage with normal publish output. -->
     <PublishSingleFile>false</PublishSingleFile>
   </PropertyGroup>
 

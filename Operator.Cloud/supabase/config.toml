@@ -1,0 +1,13 @@
+project_id = "replace-with-your-project-ref"
+
+[functions.operator-pair]
+verify_jwt = false
+
+[functions.operator-device]
+verify_jwt = false
+
+[functions.operator-command]
+verify_jwt = true
+
+[functions.transcribe-command]
+verify_jwt = true

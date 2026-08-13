@@ -1,0 +1,9 @@
+{
+  "release": "1.0.0",
+  "base_commit": "857db47c2e72c7ce08b1a13bd55d399d62a9958b",
+  "architecture": [
+    "Operator AI Desktop 1.0",
+    "Operator AI Mobile iOS/Android",
+    "Supabase Operator Cloud relay"
+  ]
+}

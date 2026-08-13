@@ -91,22 +91,36 @@ public sealed class OperatorAgent
         _settings = OperatorSettings.Load();
 
         string? apiKey =
-            Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+            OperatorSecrets.GetOpenAiApiKey();
 
         if (string.IsNullOrWhiteSpace(apiKey))
         {
             throw new InvalidOperationException(
-                "OPENAI_API_KEY was not found."
+                "OpenAI API key was not configured. Open Operator AI Setup and save the key first."
             );
         }
 
         _client = new ResponsesClient(apiKey);
     }
 
-    public async Task<string> RunAsync(
+    public Task<string> RunAsync(
         string task,
         Action<string>? log = null,
         CancellationToken cancellationToken = default)
+    {
+        return RunAsync(
+            task,
+            log,
+            cancellationToken,
+            null
+        );
+    }
+
+    public async Task<string> RunAsync(
+        string task,
+        Action<string>? log,
+        CancellationToken cancellationToken,
+        OperatorExecutionHooks? hooks)
     {
         if (string.IsNullOrWhiteSpace(task))
         {
@@ -160,6 +174,13 @@ public sealed class OperatorAgent
             {
                 token.ThrowIfCancellationRequested();
 
+                if (hooks?.BeforePlanningStepAsync != null)
+                {
+                    await hooks.BeforePlanningStepAsync(step, token);
+                }
+
+                token.ThrowIfCancellationRequested();
+
                 log?.Invoke(
                     $"[PLAN] Planning step {step}/{_settings.MaximumPlanningSteps}..."
                 );
@@ -204,7 +225,26 @@ public sealed class OperatorAgent
 
                     string result;
 
-                    if (!guard.CanExecuteTool(
+                    OperatorToolGateDecision hookDecision =
+                        OperatorToolGateDecision.Continue();
+
+                    if (hooks?.BeforeToolAsync != null)
+                    {
+                        hookDecision = await hooks.BeforeToolAsync(
+                            functionCall.FunctionName,
+                            argumentsText,
+                            token
+                        );
+                    }
+
+                    token.ThrowIfCancellationRequested();
+
+                    if (!hookDecision.Allowed)
+                    {
+                        result = $"BLOCKED: {hookDecision.Reason}";
+                        log?.Invoke($"[REMOTE] {hookDecision.Reason}");
+                    }
+                    else if (!guard.CanExecuteTool(
                             functionCall.FunctionName,
                             argumentsText,
                             out string guardReason))
