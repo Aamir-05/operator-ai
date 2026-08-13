@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Operator.Tools;
@@ -10,7 +11,6 @@ namespace Operator.Tools;
 public static class BrowserTools
 {
     // =========================================================
-    // VERSION 0.6E
     // BROWSER STATE
     // =========================================================
 
@@ -19,7 +19,35 @@ public static class BrowserTools
     private static IPage? _page;
 
     // =========================================================
-    // PERSISTENT PROFILE
+    // VERSION 0.6F-4
+    // VISUAL CLICK SAFETY STATE
+    // =========================================================
+
+    private const int VisualScreenshotMaximumAgeSeconds = 20;
+
+    private sealed record ViewportState(
+        int Width,
+        int Height,
+        double ScrollX,
+        double ScrollY,
+        string Url
+    );
+
+    private sealed record VisualScreenshotState(
+        DateTimeOffset CapturedUtc,
+        string ScreenshotPath,
+        int Width,
+        int Height,
+        double ScrollX,
+        double ScrollY,
+        string Url
+    );
+
+    private static VisualScreenshotState?
+        _latestViewportScreenshot;
+
+    // =========================================================
+    // PATHS
     // =========================================================
 
     private static readonly string PersistentProfileDirectory =
@@ -31,10 +59,6 @@ public static class BrowserTools
             "BrowserProfile"
         );
 
-    // =========================================================
-    // DOWNLOAD DIRECTORY
-    // =========================================================
-
     private static readonly string DownloadsDirectory =
         Path.Combine(
             Environment.GetFolderPath(
@@ -42,10 +66,6 @@ public static class BrowserTools
             ),
             "OperatorDownloads"
         );
-
-    // =========================================================
-    // SCREENSHOT DIRECTORY
-    // =========================================================
 
     private static readonly string ScreenshotsDirectory =
         Path.Combine(
@@ -92,6 +112,7 @@ public static class BrowserTools
 
             _page = null;
             _context = null;
+            _latestViewportScreenshot = null;
 
             if (_playwright != null)
             {
@@ -129,11 +150,8 @@ public static class BrowserTools
                         new BrowserTypeLaunchPersistentContextOptions
                         {
                             Headless = false,
-
                             SlowMo = 80,
-
                             AcceptDownloads = true,
-
                             Timeout = 30000,
 
                             ViewportSize =
@@ -141,7 +159,9 @@ public static class BrowserTools
                                 {
                                     Width = 1400,
                                     Height = 900
-                                }
+                                },
+
+                            DeviceScaleFactor = 1
                         }
                     );
 
@@ -180,7 +200,7 @@ public static class BrowserTools
     }
 
     // =========================================================
-    // SESSION INFORMATION
+    // SESSION INFO
     // =========================================================
 
     public static async Task<string> GetSessionInfoAsync()
@@ -201,16 +221,13 @@ public static class BrowserTools
 
             string title = "";
 
-            if (_page != null)
+            try
             {
-                try
-                {
-                    title =
-                        await _page.TitleAsync();
-                }
-                catch
-                {
-                }
+                title =
+                    await _page!.TitleAsync();
+            }
+            catch
+            {
             }
 
             return
@@ -221,7 +238,7 @@ public static class BrowserTools
                 $"Screenshots: {ScreenshotsDirectory}\n" +
                 $"Open tabs: {_context!.Pages.Count}\n" +
                 $"Current title: {title}\n" +
-                $"Current URL: {_page?.Url}";
+                $"Current URL: {_page!.Url}";
         }
         catch (Exception ex)
         {
@@ -242,12 +259,14 @@ public static class BrowserTools
             string ready =
                 await EnsureBrowserAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
 
-            if (string.IsNullOrWhiteSpace(url))
+            if (string.IsNullOrWhiteSpace(
+                    url))
             {
                 return
                     "ERROR: URL cannot be empty.";
@@ -259,6 +278,8 @@ public static class BrowserTools
                 NormalizeUrl(
                     url
                 );
+
+            InvalidateVisualClickGuard();
 
             await _page!.GotoAsync(
                 url,
@@ -293,7 +314,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -314,7 +336,7 @@ public static class BrowserTools
     }
 
     // =========================================================
-    // READ PAGE TEXT
+    // READ PAGE
     // =========================================================
 
     public static async Task<string> ReadPageTextAsync()
@@ -324,14 +346,17 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
 
             string text =
                 await _page!
-                    .Locator("body")
+                    .Locator(
+                        "body"
+                    )
                     .InnerTextAsync();
 
             if (text.Length > 15000)
@@ -357,6 +382,10 @@ public static class BrowserTools
 
     // =========================================================
     // SCREENSHOT
+    //
+    // IMPORTANT:
+    // ScreenshotScale.Css makes screenshot pixels correspond
+    // to CSS viewport pixels.
     // =========================================================
 
     public static async Task<string> ScreenshotAsync(
@@ -368,7 +397,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -384,7 +414,8 @@ public static class BrowserTools
                     $"browser-{DateTime.Now:yyyyMMdd-HHmmss}.png";
             }
 
-            if (!relativePath.EndsWith(
+            if (
+                !relativePath.EndsWith(
                     ".png",
                     StringComparison.OrdinalIgnoreCase)
                 &&
@@ -398,7 +429,8 @@ public static class BrowserTools
                 &&
                 !relativePath.EndsWith(
                     ".webp",
-                    StringComparison.OrdinalIgnoreCase))
+                    StringComparison.OrdinalIgnoreCase)
+            )
             {
                 relativePath +=
                     ".png";
@@ -423,6 +455,9 @@ public static class BrowserTools
                 );
             }
 
+            ViewportState before =
+                await GetViewportStateAsync();
+
             await _page!
                 .ScreenshotAsync(
                     new PageScreenshotOptions
@@ -431,7 +466,10 @@ public static class BrowserTools
                             screenshotPath,
 
                         FullPage =
-                            fullPage
+                            fullPage,
+
+                        Scale =
+                            ScreenshotScale.Css
                     }
                 );
 
@@ -447,10 +485,61 @@ public static class BrowserTools
                     screenshotPath
                 ).Length;
 
+            if (!fullPage)
+            {
+                ViewportState after =
+                    await GetViewportStateAsync();
+
+                if (
+                    before.Url.Equals(
+                        after.Url,
+                        StringComparison.OrdinalIgnoreCase)
+                    &&
+                    before.Width ==
+                        after.Width
+                    &&
+                    before.Height ==
+                        after.Height
+                    &&
+                    NearlyEqual(
+                        before.ScrollX,
+                        after.ScrollX)
+                    &&
+                    NearlyEqual(
+                        before.ScrollY,
+                        after.ScrollY)
+                )
+                {
+                    _latestViewportScreenshot =
+                        new VisualScreenshotState(
+                            DateTimeOffset.UtcNow,
+                            screenshotPath,
+                            after.Width,
+                            after.Height,
+                            after.ScrollX,
+                            after.ScrollY,
+                            after.Url
+                        );
+                }
+                else
+                {
+                    _latestViewportScreenshot =
+                        null;
+                }
+            }
+            else
+            {
+                // A full-page screenshot does not map directly
+                // to viewport mouse coordinates.
+                _latestViewportScreenshot =
+                    null;
+            }
+
             return
                 "SUCCESS: Browser screenshot captured.\n" +
                 $"File: {screenshotPath}\n" +
                 $"Full page: {fullPage}\n" +
+                $"Scale: CSS pixels\n" +
                 $"Size: {size} bytes";
         }
         catch (Exception ex)
@@ -518,12 +607,328 @@ public static class BrowserTools
                 );
             }
 
-            return result.ToString();
+            return
+                result.ToString();
         }
         catch (Exception ex)
         {
             return
                 $"ERROR: Could not list screenshots: {ex.Message}";
+        }
+    }
+
+    // =========================================================
+    // VERSION 0.6F-4
+    // VIEWPORT INFORMATION
+    // =========================================================
+
+    public static async Task<string> GetViewportInfoAsync()
+    {
+        try
+        {
+            string ready =
+                await RequirePageAsync();
+
+            if (IsError(
+                    ready))
+            {
+                return ready;
+            }
+
+            ViewportState state =
+                await GetViewportStateAsync();
+
+            StringBuilder result =
+                new StringBuilder();
+
+            result.AppendLine(
+                "BROWSER VIEWPORT"
+            );
+
+            result.AppendLine(
+                $"Width: {state.Width}"
+            );
+
+            result.AppendLine(
+                $"Height: {state.Height}"
+            );
+
+            result.AppendLine(
+                $"Scroll X: {state.ScrollX:0.##}"
+            );
+
+            result.AppendLine(
+                $"Scroll Y: {state.ScrollY:0.##}"
+            );
+
+            result.AppendLine(
+                $"URL: {state.Url}"
+            );
+
+            if (_latestViewportScreenshot == null)
+            {
+                result.AppendLine(
+                    "Recent visual-click screenshot: No"
+                );
+            }
+            else
+            {
+                double ageSeconds =
+                    (
+                        DateTimeOffset.UtcNow
+                        -
+                        _latestViewportScreenshot.CapturedUtc
+                    )
+                    .TotalSeconds;
+
+                result.AppendLine(
+                    "Recent visual-click screenshot: Yes"
+                );
+
+                result.AppendLine(
+                    $"Screenshot age: {ageSeconds:0.0} seconds"
+                );
+
+                result.AppendLine(
+                    $"Screenshot: {_latestViewportScreenshot.ScreenshotPath}"
+                );
+            }
+
+            return
+                result.ToString();
+        }
+        catch (Exception ex)
+        {
+            return
+                $"ERROR: Could not read browser viewport: {ex.Message}";
+        }
+    }
+
+    // =========================================================
+    // VERSION 0.6F-4
+    // MOUSE MOVE
+    // =========================================================
+
+    public static async Task<string> MouseMoveAsync(
+        int x,
+        int y)
+    {
+        try
+        {
+            string ready =
+                await RequirePageAsync();
+
+            if (IsError(
+                    ready))
+            {
+                return ready;
+            }
+
+            ViewportState state =
+                await GetViewportStateAsync();
+
+            string validation =
+                ValidateCoordinate(
+                    x,
+                    y,
+                    state
+                );
+
+            if (IsError(
+                    validation))
+            {
+                return validation;
+            }
+
+            await _page!
+                .Mouse
+                .MoveAsync(
+                    x,
+                    y
+                );
+
+            return
+                $"SUCCESS: Moved browser mouse to viewport coordinate ({x}, {y}).";
+        }
+        catch (Exception ex)
+        {
+            return
+                $"ERROR: Browser mouse move failed: {ex.Message}";
+        }
+    }
+
+    // =========================================================
+    // VERSION 0.6F-4
+    // SAFE COORDINATE CLICK
+    // =========================================================
+
+    public static async Task<string> MouseClickAsync(
+        int x,
+        int y)
+    {
+        try
+        {
+            string ready =
+                await RequirePageAsync();
+
+            if (IsError(
+                    ready))
+            {
+                return ready;
+            }
+
+            string guard =
+                await ValidateVisualClickGuardAsync(
+                    x,
+                    y
+                );
+
+            if (IsError(
+                    guard))
+            {
+                return guard;
+            }
+
+            await _page!
+                .Mouse
+                .ClickAsync(
+                    x,
+                    y
+                );
+
+            InvalidateVisualClickGuard();
+
+            return
+                "SUCCESS: Visual coordinate click performed.\n" +
+                $"Coordinate: ({x}, {y})";
+        }
+        catch (Exception ex)
+        {
+            return
+                $"ERROR: Browser coordinate click failed: {ex.Message}";
+        }
+    }
+
+    // =========================================================
+    // VERSION 0.6F-4
+    // SAFE DOUBLE CLICK
+    // =========================================================
+
+    public static async Task<string> MouseDoubleClickAsync(
+        int x,
+        int y)
+    {
+        try
+        {
+            string ready =
+                await RequirePageAsync();
+
+            if (IsError(
+                    ready))
+            {
+                return ready;
+            }
+
+            string guard =
+                await ValidateVisualClickGuardAsync(
+                    x,
+                    y
+                );
+
+            if (IsError(
+                    guard))
+            {
+                return guard;
+            }
+
+            await _page!
+                .Mouse
+                .DblClickAsync(
+                    x,
+                    y
+                );
+
+            InvalidateVisualClickGuard();
+
+            return
+                "SUCCESS: Visual coordinate double-click performed.\n" +
+                $"Coordinate: ({x}, {y})";
+        }
+        catch (Exception ex)
+        {
+            return
+                $"ERROR: Browser coordinate double-click failed: {ex.Message}";
+        }
+    }
+
+    // =========================================================
+    // VERSION 0.6F-4
+    // ELEMENT BOUNDING BOX
+    // =========================================================
+
+    public static async Task<string> GetElementBoxAsync(
+        string locatorType,
+        string query)
+    {
+        try
+        {
+            string ready =
+                await RequirePageAsync();
+
+            if (IsError(
+                    ready))
+            {
+                return ready;
+            }
+
+            ILocator locator =
+                ResolveLocator(
+                    locatorType,
+                    query
+                );
+
+            int count =
+                await locator.CountAsync();
+
+            if (count == 0)
+            {
+                return
+                    $"NOT_FOUND: Could not find browser element {locatorType}='{query}'.";
+            }
+
+            LocatorBoundingBoxResult? box =
+                await locator
+                    .First
+                    .BoundingBoxAsync();
+
+            if (box == null)
+            {
+                return
+                    $"NOT_FOUND: Browser element {locatorType}='{query}' is not currently visible.";
+            }
+
+            double centerX =
+                box.X +
+                box.Width / 2.0;
+
+            double centerY =
+                box.Y +
+                box.Height / 2.0;
+
+            return
+                "SUCCESS: Browser element bounding box.\n" +
+                $"Locator: {locatorType}='{query}'\n" +
+                $"X: {box.X:0.##}\n" +
+                $"Y: {box.Y:0.##}\n" +
+                $"Width: {box.Width:0.##}\n" +
+                $"Height: {box.Height:0.##}\n" +
+                $"Center X: {centerX:0.##}\n" +
+                $"Center Y: {centerY:0.##}";
+        }
+        catch (Exception ex)
+        {
+            return
+                $"ERROR: Could not read browser element bounding box: {ex.Message}";
         }
     }
 
@@ -538,7 +943,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -551,18 +957,18 @@ public static class BrowserTools
             int count =
                 await links.CountAsync();
 
+            int maximum =
+                Math.Min(
+                    count,
+                    60
+                );
+
             StringBuilder result =
                 new StringBuilder();
 
             result.AppendLine(
                 "PAGE LINKS"
             );
-
-            int maximum =
-                Math.Min(
-                    count,
-                    60
-                );
 
             for (int i = 0;
                  i < maximum;
@@ -571,15 +977,19 @@ public static class BrowserTools
                 try
                 {
                     ILocator link =
-                        links.Nth(i);
+                        links.Nth(
+                            i
+                        );
 
                     string text = "";
 
                     try
                     {
                         text =
-                            (await link.InnerTextAsync())
-                                .Trim();
+                            (
+                                await link.InnerTextAsync()
+                            )
+                            .Trim();
                     }
                     catch
                     {
@@ -590,16 +1000,19 @@ public static class BrowserTools
                             "href"
                         );
 
-                    if (string.IsNullOrWhiteSpace(text) &&
-                        string.IsNullOrWhiteSpace(href))
+                    if (
+                        string.IsNullOrWhiteSpace(
+                            text)
+                        &&
+                        string.IsNullOrWhiteSpace(
+                            href)
+                    )
                     {
                         continue;
                     }
 
                     result.AppendLine(
-                        $"[{i + 1}] " +
-                        $"Text=\"{text}\" " +
-                        $"Href=\"{href}\""
+                        $"[{i + 1}] Text=\"{text}\" Href=\"{href}\""
                     );
                 }
                 catch
@@ -614,7 +1027,8 @@ public static class BrowserTools
                 );
             }
 
-            return result.ToString();
+            return
+                result.ToString();
         }
         catch (Exception ex)
         {
@@ -634,7 +1048,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -667,7 +1082,9 @@ public static class BrowserTools
                 try
                 {
                     ILocator element =
-                        elements.Nth(i);
+                        elements.Nth(
+                            i
+                        );
 
                     string tag = "";
 
@@ -688,8 +1105,10 @@ public static class BrowserTools
                     try
                     {
                         text =
-                            (await element.InnerTextAsync())
-                                .Trim();
+                            (
+                                await element.InnerTextAsync()
+                            )
+                            .Trim();
                     }
                     catch
                     {
@@ -767,7 +1186,8 @@ public static class BrowserTools
                 );
             }
 
-            return result.ToString();
+            return
+                result.ToString();
         }
         catch (Exception ex)
         {
@@ -777,17 +1197,7 @@ public static class BrowserTools
     }
 
     // =========================================================
-    // FIND GENERIC ELEMENTS
-    //
-    // Supported:
-    // css
-    // text
-    // exact_text
-    // label
-    // placeholder
-    // title
-    // testid
-    // alt
+    // FIND
     // =========================================================
 
     public static async Task<string> FindElementsAsync(
@@ -799,7 +1209,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -824,7 +1235,7 @@ public static class BrowserTools
     }
 
     // =========================================================
-    // ROLE LOCATOR
+    // FIND BY ROLE
     // =========================================================
 
     public static async Task<string> FindByRoleAsync(
@@ -837,7 +1248,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -877,7 +1289,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -893,7 +1306,7 @@ public static class BrowserTools
                     state
                 );
 
-            int safeTimeoutSeconds =
+            int timeout =
                 Math.Clamp(
                     timeoutSeconds,
                     1,
@@ -907,8 +1320,7 @@ public static class BrowserTools
                         waitState,
 
                     Timeout =
-                        safeTimeoutSeconds
-                        * 1000
+                        timeout * 1000
                 }
             );
 
@@ -923,7 +1335,7 @@ public static class BrowserTools
     }
 
     // =========================================================
-    // WAIT FOR ROLE
+    // WAIT BY ROLE
     // =========================================================
 
     public static async Task<string> WaitForRoleAsync(
@@ -938,7 +1350,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -950,12 +1363,7 @@ public static class BrowserTools
                     exact
                 );
 
-            WaitForSelectorState waitState =
-                ParseWaitState(
-                    state
-                );
-
-            int safeTimeout =
+            int timeout =
                 Math.Clamp(
                     timeoutSeconds,
                     1,
@@ -966,10 +1374,12 @@ public static class BrowserTools
                 new LocatorWaitForOptions
                 {
                     State =
-                        waitState,
+                        ParseWaitState(
+                            state
+                        ),
 
                     Timeout =
-                        safeTimeout * 1000
+                        timeout * 1000
                 }
             );
 
@@ -985,10 +1395,6 @@ public static class BrowserTools
 
     // =========================================================
     // WAIT FOR URL
-    //
-    // Supports Playwright glob patterns such as:
-    // **/orders/**
-    // https://example.com/dashboard
     // =========================================================
 
     public static async Task<string> WaitForUrlAsync(
@@ -1000,7 +1406,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -1012,7 +1419,7 @@ public static class BrowserTools
                     "ERROR: URL pattern cannot be empty.";
             }
 
-            int safeTimeout =
+            int timeout =
                 Math.Clamp(
                     timeoutSeconds,
                     1,
@@ -1024,7 +1431,7 @@ public static class BrowserTools
                 new PageWaitForURLOptions
                 {
                     Timeout =
-                        safeTimeout * 1000
+                        timeout * 1000
                 }
             );
 
@@ -1052,7 +1459,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -1064,7 +1472,7 @@ public static class BrowserTools
                     "ERROR: Text cannot be empty.";
             }
 
-            int safeTimeout =
+            int timeout =
                 Math.Clamp(
                     timeoutSeconds,
                     1,
@@ -1088,7 +1496,7 @@ public static class BrowserTools
                         WaitForSelectorState.Visible,
 
                     Timeout =
-                        safeTimeout * 1000
+                        timeout * 1000
                 }
             );
 
@@ -1103,7 +1511,7 @@ public static class BrowserTools
     }
 
     // =========================================================
-    // CLICK GENERIC
+    // CLICK
     // =========================================================
 
     public static async Task<string> ClickAsync(
@@ -1115,7 +1523,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -1126,14 +1535,13 @@ public static class BrowserTools
                     query
                 );
 
-            int count =
-                await locator.CountAsync();
-
-            if (count == 0)
+            if (await locator.CountAsync() == 0)
             {
                 return
                     $"NOT_FOUND: Could not find browser element {locatorType}='{query}'.";
             }
+
+            InvalidateVisualClickGuard();
 
             await locator.First.ClickAsync();
 
@@ -1148,7 +1556,7 @@ public static class BrowserTools
     }
 
     // =========================================================
-    // CLICK ROLE
+    // ROLE CLICK
     // =========================================================
 
     public static async Task<string> ClickRoleAsync(
@@ -1161,7 +1569,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -1173,14 +1582,13 @@ public static class BrowserTools
                     exact
                 );
 
-            int count =
-                await locator.CountAsync();
-
-            if (count == 0)
+            if (await locator.CountAsync() == 0)
             {
                 return
                     $"NOT_FOUND: Could not find role '{role}' named '{accessibleName}'.";
             }
+
+            InvalidateVisualClickGuard();
 
             await locator.First.ClickAsync();
 
@@ -1195,7 +1603,7 @@ public static class BrowserTools
     }
 
     // =========================================================
-    // FILL GENERIC
+    // FILL
     // =========================================================
 
     public static async Task<string> FillAsync(
@@ -1208,7 +1616,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -1219,14 +1628,13 @@ public static class BrowserTools
                     query
                 );
 
-            int count =
-                await locator.CountAsync();
-
-            if (count == 0)
+            if (await locator.CountAsync() == 0)
             {
                 return
                     $"NOT_FOUND: Could not find browser field {locatorType}='{query}'.";
             }
+
+            InvalidateVisualClickGuard();
 
             await locator.First.FillAsync(
                 text
@@ -1243,7 +1651,7 @@ public static class BrowserTools
     }
 
     // =========================================================
-    // FILL ROLE
+    // ROLE FILL
     // =========================================================
 
     public static async Task<string> FillRoleAsync(
@@ -1257,7 +1665,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -1269,14 +1678,13 @@ public static class BrowserTools
                     exact
                 );
 
-            int count =
-                await locator.CountAsync();
-
-            if (count == 0)
+            if (await locator.CountAsync() == 0)
             {
                 return
                     $"NOT_FOUND: Could not find role '{role}' named '{accessibleName}'.";
             }
+
+            InvalidateVisualClickGuard();
 
             await locator.First.FillAsync(
                 text
@@ -1306,7 +1714,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -1317,22 +1726,20 @@ public static class BrowserTools
                     query
                 );
 
-            int count =
-                await locator.CountAsync();
-
-            if (count == 0)
+            if (await locator.CountAsync() == 0)
             {
                 return
                     $"NOT_FOUND: Could not find browser field {locatorType}='{query}'.";
             }
+
+            InvalidateVisualClickGuard();
 
             await locator.First
                 .PressSequentiallyAsync(
                     text,
                     new LocatorPressSequentiallyOptions
                     {
-                        Delay =
-                            40
+                        Delay = 40
                     }
                 );
 
@@ -1360,7 +1767,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -1371,14 +1779,13 @@ public static class BrowserTools
                     query
                 );
 
-            int count =
-                await locator.CountAsync();
-
-            if (count == 0)
+            if (await locator.CountAsync() == 0)
             {
                 return
                     $"NOT_FOUND: Could not find browser element {locatorType}='{query}'.";
             }
+
+            InvalidateVisualClickGuard();
 
             await locator.First.PressAsync(
                 key
@@ -1406,10 +1813,13 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
+
+            InvalidateVisualClickGuard();
 
             await _page!.Keyboard.PressAsync(
                 key
@@ -1438,7 +1848,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -1449,29 +1860,25 @@ public static class BrowserTools
                     query
                 );
 
-            int count =
-                await locator.CountAsync();
-
-            if (count == 0)
+            if (await locator.CountAsync() == 0)
             {
                 return
                     $"NOT_FOUND: Could not find browser element {locatorType}='{query}'.";
             }
-
-            ILocator target =
-                locator.First;
 
             string text;
 
             try
             {
                 text =
-                    await target.InnerTextAsync();
+                    await locator.First
+                        .InnerTextAsync();
             }
             catch
             {
                 text =
-                    await target.TextContentAsync()
+                    await locator.First
+                        .TextContentAsync()
                     ?? "";
             }
 
@@ -1501,7 +1908,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -1513,10 +1921,7 @@ public static class BrowserTools
                     exact
                 );
 
-            int count =
-                await locator.CountAsync();
-
-            if (count == 0)
+            if (await locator.CountAsync() == 0)
             {
                 return
                     $"NOT_FOUND: Could not find role '{role}' named '{accessibleName}'.";
@@ -1565,7 +1970,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -1608,7 +2014,7 @@ public static class BrowserTools
     }
 
     // =========================================================
-    // GET INPUT VALUE
+    // GET VALUE
     // =========================================================
 
     public static async Task<string> GetValueAsync(
@@ -1620,7 +2026,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -1653,7 +2060,7 @@ public static class BrowserTools
     }
 
     // =========================================================
-    // VISIBILITY CHECK
+    // IS VISIBLE
     // =========================================================
 
     public static async Task<string> IsVisibleAsync(
@@ -1665,7 +2072,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -1711,7 +2119,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -1722,6 +2131,8 @@ public static class BrowserTools
                     -10000,
                     10000
                 );
+
+            InvalidateVisualClickGuard();
 
             await _page!.Mouse.WheelAsync(
                 0,
@@ -1751,7 +2162,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -1767,6 +2179,8 @@ public static class BrowserTools
                 return
                     $"NOT_FOUND: Could not find browser element {locatorType}='{query}'.";
             }
+
+            InvalidateVisualClickGuard();
 
             await locator.First
                 .ScrollIntoViewIfNeededAsync();
@@ -1795,7 +2209,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -1811,6 +2226,8 @@ public static class BrowserTools
                 return
                     $"NOT_FOUND: Could not find checkbox/radio {locatorType}='{query}'.";
             }
+
+            InvalidateVisualClickGuard();
 
             ILocator target =
                 locator.First;
@@ -1847,7 +2264,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -1893,7 +2311,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -1915,6 +2334,8 @@ public static class BrowserTools
                     selectionType,
                     selection
                 );
+
+            InvalidateVisualClickGuard();
 
             IReadOnlyList<string> selected =
                 await locator.First
@@ -1944,7 +2365,7 @@ public static class BrowserTools
     }
 
     // =========================================================
-    // UPLOAD DESKTOP FILE
+    // UPLOAD
     // =========================================================
 
     public static async Task<string> UploadDesktopFileAsync(
@@ -1957,7 +2378,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -1992,6 +2414,8 @@ public static class BrowserTools
                     $"NOT_FOUND: Could not find file upload input {locatorType}='{query}'.";
             }
 
+            InvalidateVisualClickGuard();
+
             await locator.First
                 .SetInputFilesAsync(
                     filePath
@@ -2021,7 +2445,8 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
@@ -2042,6 +2467,8 @@ public static class BrowserTools
                     $"NOT_FOUND: Could not find download element {locatorType}='{query}'.";
             }
 
+            InvalidateVisualClickGuard();
+
             Task<IDownload> downloadTask =
                 _page!.WaitForDownloadAsync();
 
@@ -2055,15 +2482,12 @@ public static class BrowserTools
             if (string.IsNullOrWhiteSpace(
                     preferredRelativePath))
             {
-                string suggested =
-                    Path.GetFileName(
-                        download.SuggestedFilename
-                    );
-
                 targetPath =
                     ResolvePathInsideRoot(
                         DownloadsDirectory,
-                        suggested
+                        Path.GetFileName(
+                            download.SuggestedFilename
+                        )
                     );
             }
             else
@@ -2172,7 +2596,8 @@ public static class BrowserTools
                 );
             }
 
-            return result.ToString();
+            return
+                result.ToString();
         }
         catch (Exception ex)
         {
@@ -2182,7 +2607,7 @@ public static class BrowserTools
     }
 
     // =========================================================
-    // HISTORY
+    // BACK
     // =========================================================
 
     public static async Task<string> BackAsync()
@@ -2192,10 +2617,13 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
+
+            InvalidateVisualClickGuard();
 
             await _page!.GoBackAsync(
                 new PageGoBackOptions
@@ -2218,6 +2646,10 @@ public static class BrowserTools
         }
     }
 
+    // =========================================================
+    // FORWARD
+    // =========================================================
+
     public static async Task<string> ForwardAsync()
     {
         try
@@ -2225,10 +2657,13 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
+
+            InvalidateVisualClickGuard();
 
             await _page!.GoForwardAsync(
                 new PageGoForwardOptions
@@ -2251,6 +2686,10 @@ public static class BrowserTools
         }
     }
 
+    // =========================================================
+    // RELOAD
+    // =========================================================
+
     public static async Task<string> ReloadAsync()
     {
         try
@@ -2258,10 +2697,13 @@ public static class BrowserTools
             string ready =
                 await RequirePageAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
+
+            InvalidateVisualClickGuard();
 
             await _page!.ReloadAsync(
                 new PageReloadOptions
@@ -2285,7 +2727,7 @@ public static class BrowserTools
     }
 
     // =========================================================
-    // TABS
+    // NEW TAB
     // =========================================================
 
     public static async Task<string> NewTabAsync(
@@ -2296,10 +2738,13 @@ public static class BrowserTools
             string ready =
                 await EnsureBrowserAsync();
 
-            if (IsError(ready))
+            if (IsError(
+                    ready))
             {
                 return ready;
             }
+
+            InvalidateVisualClickGuard();
 
             _page =
                 await _context!.NewPageAsync();
@@ -2331,11 +2776,8 @@ public static class BrowserTools
                 );
             }
 
-            int tabCount =
-                _context.Pages.Count;
-
             return
-                $"SUCCESS: Opened browser tab {tabCount}. URL: {_page.Url}";
+                $"SUCCESS: Opened browser tab {_context.Pages.Count}. URL: {_page.Url}";
         }
         catch (Exception ex)
         {
@@ -2344,12 +2786,19 @@ public static class BrowserTools
         }
     }
 
+    // =========================================================
+    // LIST TABS
+    // =========================================================
+
     public static async Task<string> ListTabsAsync()
     {
         try
         {
-            if (!IsBrowserRunning() ||
-                _context == null)
+            if (
+                !IsBrowserRunning()
+                ||
+                _context == null
+            )
             {
                 return
                     "ERROR: Browser is not running.";
@@ -2400,7 +2849,8 @@ public static class BrowserTools
                 );
             }
 
-            return result.ToString();
+            return
+                result.ToString();
         }
         catch (Exception ex)
         {
@@ -2409,24 +2859,36 @@ public static class BrowserTools
         }
     }
 
+    // =========================================================
+    // SWITCH TAB
+    // =========================================================
+
     public static async Task<string> SwitchTabAsync(
         int tabNumber)
     {
         try
         {
-            if (!IsBrowserRunning() ||
-                _context == null)
+            if (
+                !IsBrowserRunning()
+                ||
+                _context == null
+            )
             {
                 return
                     "ERROR: Browser is not running.";
             }
 
-            if (tabNumber < 1 ||
-                tabNumber > _context.Pages.Count)
+            if (
+                tabNumber < 1
+                ||
+                tabNumber > _context.Pages.Count
+            )
             {
                 return
                     $"ERROR: Tab {tabNumber} does not exist.";
             }
+
+            InvalidateVisualClickGuard();
 
             _page =
                 _context.Pages[
@@ -2453,24 +2915,36 @@ public static class BrowserTools
         }
     }
 
+    // =========================================================
+    // CLOSE TAB
+    // =========================================================
+
     public static async Task<string> CloseTabAsync(
         int tabNumber)
     {
         try
         {
-            if (!IsBrowserRunning() ||
-                _context == null)
+            if (
+                !IsBrowserRunning()
+                ||
+                _context == null
+            )
             {
                 return
                     "ERROR: Browser is not running.";
             }
 
-            if (tabNumber < 1 ||
-                tabNumber > _context.Pages.Count)
+            if (
+                tabNumber < 1
+                ||
+                tabNumber > _context.Pages.Count
+            )
             {
                 return
                     $"ERROR: Tab {tabNumber} does not exist.";
             }
+
+            InvalidateVisualClickGuard();
 
             IPage tab =
                 _context.Pages[
@@ -2500,12 +2974,19 @@ public static class BrowserTools
 
             await tab.CloseAsync();
 
-            if (_context.Pages.Count > 0 &&
-                closingCurrent &&
-                (_page == null ||
-                 ReferenceEquals(
-                     _page,
-                     tab)))
+            if (
+                _context.Pages.Count > 0
+                &&
+                closingCurrent
+                &&
+                (
+                    _page == null
+                    ||
+                    ReferenceEquals(
+                        _page,
+                        tab)
+                )
+            )
             {
                 _page =
                     _context.Pages[
@@ -2537,6 +3018,8 @@ public static class BrowserTools
     {
         try
         {
+            InvalidateVisualClickGuard();
+
             if (_context != null)
             {
                 try
@@ -2571,6 +3054,7 @@ public static class BrowserTools
         {
             _page = null;
             _context = null;
+            _latestViewportScreenshot = null;
 
             if (_playwright != null)
             {
@@ -2588,6 +3072,232 @@ public static class BrowserTools
             return
                 $"ERROR: Could not close browser cleanly: {ex.Message}";
         }
+    }
+
+    // =========================================================
+    // SAFE VISUAL CLICK VALIDATION
+    // =========================================================
+
+    private static async Task<string> ValidateVisualClickGuardAsync(
+        int x,
+        int y)
+    {
+        if (_latestViewportScreenshot == null)
+        {
+            return
+                "BLOCKED: Coordinate clicking requires a recent viewport screenshot. " +
+                "Use browser visual inspection or capture a non-full-page screenshot first.";
+        }
+
+        if (!File.Exists(
+                _latestViewportScreenshot.ScreenshotPath))
+        {
+            InvalidateVisualClickGuard();
+
+            return
+                "BLOCKED: The screenshot used for coordinate clicking no longer exists.";
+        }
+
+        double ageSeconds =
+            (
+                DateTimeOffset.UtcNow
+                -
+                _latestViewportScreenshot.CapturedUtc
+            )
+            .TotalSeconds;
+
+        if (ageSeconds >
+            VisualScreenshotMaximumAgeSeconds)
+        {
+            InvalidateVisualClickGuard();
+
+            return
+                $"BLOCKED: The visual screenshot is too old ({ageSeconds:0.0} seconds). " +
+                "Capture a fresh viewport screenshot before clicking.";
+        }
+
+        ViewportState current =
+            await GetViewportStateAsync();
+
+        string coordinateValidation =
+            ValidateCoordinate(
+                x,
+                y,
+                current
+            );
+
+        if (IsError(
+                coordinateValidation))
+        {
+            return
+                coordinateValidation;
+        }
+
+        if (!current.Url.Equals(
+                _latestViewportScreenshot.Url,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            InvalidateVisualClickGuard();
+
+            return
+                "BLOCKED: Browser URL changed after the visual screenshot. " +
+                "Capture a fresh screenshot before clicking.";
+        }
+
+        if (
+            current.Width !=
+                _latestViewportScreenshot.Width
+            ||
+            current.Height !=
+                _latestViewportScreenshot.Height
+        )
+        {
+            InvalidateVisualClickGuard();
+
+            return
+                "BLOCKED: Browser viewport size changed after the visual screenshot. " +
+                "Capture a fresh screenshot before clicking.";
+        }
+
+        if (
+            !NearlyEqual(
+                current.ScrollX,
+                _latestViewportScreenshot.ScrollX)
+            ||
+            !NearlyEqual(
+                current.ScrollY,
+                _latestViewportScreenshot.ScrollY)
+        )
+        {
+            InvalidateVisualClickGuard();
+
+            return
+                "BLOCKED: Browser scroll position changed after the visual screenshot. " +
+                "Capture a fresh screenshot before clicking.";
+        }
+
+        return
+            "SUCCESS";
+    }
+
+    // =========================================================
+    // COORDINATE VALIDATION
+    // =========================================================
+
+    private static string ValidateCoordinate(
+        int x,
+        int y,
+        ViewportState state)
+    {
+        if (x < 0 ||
+            y < 0)
+        {
+            return
+                "ERROR: Browser coordinates cannot be negative.";
+        }
+
+        if (
+            x >= state.Width
+            ||
+            y >= state.Height
+        )
+        {
+            return
+                "ERROR: Browser coordinate is outside the current viewport. " +
+                $"Requested ({x}, {y}), viewport is {state.Width}x{state.Height}.";
+        }
+
+        return
+            "SUCCESS";
+    }
+
+    // =========================================================
+    // VIEWPORT STATE
+    // =========================================================
+
+    private static async Task<ViewportState> GetViewportStateAsync()
+    {
+        if (_page == null)
+        {
+            throw new InvalidOperationException(
+                "No browser page is currently open."
+            );
+        }
+
+        JsonElement state =
+            await _page
+                .EvaluateAsync<JsonElement>(
+                    """
+                    () => ({
+                        width: window.innerWidth,
+                        height: window.innerHeight,
+                        scrollX: window.scrollX,
+                        scrollY: window.scrollY
+                    })
+                    """
+                );
+
+        int width =
+            state
+                .GetProperty(
+                    "width"
+                )
+                .GetInt32();
+
+        int height =
+            state
+                .GetProperty(
+                    "height"
+                )
+                .GetInt32();
+
+        double scrollX =
+            state
+                .GetProperty(
+                    "scrollX"
+                )
+                .GetDouble();
+
+        double scrollY =
+            state
+                .GetProperty(
+                    "scrollY"
+                )
+                .GetDouble();
+
+        return
+            new ViewportState(
+                width,
+                height,
+                scrollX,
+                scrollY,
+                _page.Url
+            );
+    }
+
+    // =========================================================
+    // INVALIDATE VISUAL CLICK PERMISSION
+    // =========================================================
+
+    private static void InvalidateVisualClickGuard()
+    {
+        _latestViewportScreenshot =
+            null;
+    }
+
+    // =========================================================
+    // FLOAT COMPARISON
+    // =========================================================
+
+    private static bool NearlyEqual(
+        double a,
+        double b)
+    {
+        return
+            Math.Abs(
+                a - b
+            )
+            <= 1.0;
     }
 
     // =========================================================
@@ -2635,8 +3345,7 @@ public static class BrowserTools
                     query,
                     new PageGetByTextOptions
                     {
-                        Exact =
-                            true
+                        Exact = true
                     }
                 ),
 
@@ -2718,7 +3427,7 @@ public static class BrowserTools
     }
 
     // =========================================================
-    // ARIA ROLE PARSER
+    // ROLE PARSER
     // =========================================================
 
     private static AriaRole ParseAriaRole(
@@ -2741,13 +3450,12 @@ public static class BrowserTools
         }
 
         throw new ArgumentException(
-            $"Unsupported ARIA role '{role}'. " +
-            "Examples: button, link, textbox, searchbox, checkbox, radio, combobox, heading, dialog, tab, option."
+            $"Unsupported ARIA role '{role}'."
         );
     }
 
     // =========================================================
-    // DESCRIBE LOCATOR MATCHES
+    // DESCRIBE LOCATOR
     // =========================================================
 
     private static async Task<string> DescribeLocatorMatchesAsync(
@@ -2783,15 +3491,19 @@ public static class BrowserTools
             try
             {
                 ILocator element =
-                    locator.Nth(i);
+                    locator.Nth(
+                        i
+                    );
 
                 string text = "";
 
                 try
                 {
                     text =
-                        (await element.InnerTextAsync())
-                            .Trim();
+                        (
+                            await element.InnerTextAsync()
+                        )
+                        .Trim();
                 }
                 catch
                 {
@@ -2843,7 +3555,8 @@ public static class BrowserTools
             }
         }
 
-        return result.ToString();
+        return
+            result.ToString();
     }
 
     // =========================================================
@@ -2866,8 +3579,7 @@ public static class BrowserTools
                     return
                         new SelectOptionValue
                         {
-                            Value =
-                                selection
+                            Value = selection
                         };
                 }
 
@@ -2876,8 +3588,7 @@ public static class BrowserTools
                     return
                         new SelectOptionValue
                         {
-                            Label =
-                                selection
+                            Label = selection
                         };
                 }
 
@@ -2902,8 +3613,7 @@ public static class BrowserTools
                     return
                         new SelectOptionValue
                         {
-                            Index =
-                                index
+                            Index = index
                         };
                 }
 
@@ -2918,7 +3628,7 @@ public static class BrowserTools
     }
 
     // =========================================================
-    // WAIT STATE PARSER
+    // WAIT STATE
     // =========================================================
 
     private static WaitForSelectorState ParseWaitState(
@@ -2945,8 +3655,7 @@ public static class BrowserTools
 
             _ =>
                 throw new ArgumentException(
-                    $"Unsupported wait state '{state}'. " +
-                    "Supported states: visible, hidden, attached, detached."
+                    $"Unsupported wait state '{state}'."
                 )
         };
     }
@@ -3005,7 +3714,8 @@ public static class BrowserTools
             );
         }
 
-        return resolved;
+        return
+            resolved;
     }
 
     // =========================================================
@@ -3080,6 +3790,8 @@ public static class BrowserTools
             }
         }
 
+        InvalidateVisualClickGuard();
+
         if (_context.Pages.Count > 0)
         {
             _page =
@@ -3122,12 +3834,9 @@ public static class BrowserTools
             IBrowser? browser =
                 _context.Browser;
 
-            if (browser == null)
-            {
-                return false;
-            }
-
             return
+                browser != null
+                &&
                 browser.IsConnected;
         }
         catch
@@ -3158,7 +3867,7 @@ public static class BrowserTools
     }
 
     // =========================================================
-    // NORMALIZE URL
+    // URL
     // =========================================================
 
     private static string NormalizeUrl(
@@ -3167,23 +3876,27 @@ public static class BrowserTools
         string result =
             url.Trim();
 
-        if (!result.StartsWith(
+        if (
+            !result.StartsWith(
                 "http://",
                 StringComparison.OrdinalIgnoreCase)
             &&
             !result.StartsWith(
                 "https://",
-                StringComparison.OrdinalIgnoreCase))
+                StringComparison.OrdinalIgnoreCase)
+        )
         {
             result =
-                "https://" + result;
+                "https://" +
+                result;
         }
 
-        return result;
+        return
+            result;
     }
 
     // =========================================================
-    // ERROR CHECK
+    // FAILURE CHECK
     // =========================================================
 
     private static bool IsError(

@@ -88,10 +88,9 @@ public sealed class LocalBrowserTestServer :
             try
             {
                 TcpClient client =
-                    await _listener
-                        .AcceptTcpClientAsync(
-                            cancellationToken
-                        );
+                    await _listener.AcceptTcpClientAsync(
+                        cancellationToken
+                    );
 
                 _ =
                     Task.Run(
@@ -148,7 +147,7 @@ public sealed class LocalBrowserTestServer :
     }
 
     // =========================================================
-    // HANDLE REQUEST
+    // REQUEST
     // =========================================================
 
     private static async Task HandleClientAsync(
@@ -166,7 +165,8 @@ public sealed class LocalBrowserTestServer :
                     cancellationToken
                 );
 
-            if (string.IsNullOrWhiteSpace(request))
+            if (string.IsNullOrWhiteSpace(
+                    request))
             {
                 return;
             }
@@ -205,6 +205,18 @@ public sealed class LocalBrowserTestServer :
                     StringComparison.OrdinalIgnoreCase))
             {
                 await SendVisionFallbackPageAsync(
+                    stream,
+                    cancellationToken
+                );
+
+                return;
+            }
+
+            if (path.Equals(
+                    "/coordinate-canvas",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                await SendCoordinateCanvasPageAsync(
                     stream,
                     cancellationToken
                 );
@@ -256,7 +268,7 @@ public sealed class LocalBrowserTestServer :
     }
 
     // =========================================================
-    // READ REQUEST
+    // READ HTTP REQUEST
     // =========================================================
 
     private static async Task<string> ReadRequestAsync(
@@ -311,7 +323,7 @@ public sealed class LocalBrowserTestServer :
     }
 
     // =========================================================
-    // MAIN 0.6E TEST PAGE
+    // MAIN RELIABILITY PAGE
     // =========================================================
 
     private static async Task SendMainPageAsync(
@@ -321,6 +333,7 @@ public sealed class LocalBrowserTestServer :
         string html =
             """
             <!DOCTYPE html>
+
             <html lang="en">
 
             <head>
@@ -339,15 +352,6 @@ public sealed class LocalBrowserTestServer :
                         margin: 45px auto;
                         padding: 0 30px 100px 30px;
                         line-height: 1.5;
-                    }
-
-                    h1 {
-                        margin-bottom: 8px;
-                    }
-
-                    .subtitle {
-                        color: #555;
-                        margin-bottom: 30px;
                     }
 
                     .card {
@@ -384,39 +388,23 @@ public sealed class LocalBrowserTestServer :
                         font-family: Consolas, monospace;
                     }
 
-                    .exact-target {
-                        border: 1px dashed #777;
-                        padding: 10px;
-                        margin-top: 10px;
-                    }
-
                     .hidden {
                         display: none;
                     }
 
-                    .download-button,
-                    .next-button {
-                        display: inline-block;
-                        padding: 10px 18px;
-                        border: 1px solid #777;
-                        border-radius: 5px;
-                        color: black;
-                        text-decoration: none;
-                        background: #eee;
-                        margin-right: 10px;
+                    .exact-target {
+                        border: 1px dashed #777;
+                        padding: 10px;
                     }
 
                     .spacer {
                         height: 1200px;
-                        border-left: 3px dotted #ddd;
-                        margin-left: 15px;
                     }
 
                     #bottomTarget {
                         border: 2px solid #555;
                         padding: 20px;
-                        font-weight: 600;
-                        margin-bottom: 40px;
+                        margin-bottom: 30px;
                     }
 
                 </style>
@@ -429,9 +417,9 @@ public sealed class LocalBrowserTestServer :
                     Operator AI Browser Reliability Test
                 </h1>
 
-                <div class="subtitle">
-                    Local Version 0.6E deterministic test page
-                </div>
+                <p>
+                    Local deterministic browser test page.
+                </p>
 
                 <div class="card">
 
@@ -453,10 +441,6 @@ public sealed class LocalBrowserTestServer :
                 </div>
 
                 <div class="card">
-
-                    <div>
-                        Exact text test:
-                    </div>
 
                     <div
                         id="exactTarget"
@@ -568,7 +552,6 @@ public sealed class LocalBrowserTestServer :
 
                     <a
                         id="downloadReport"
-                        class="download-button"
                         href="/download">
                         Download Test Report
                     </a>
@@ -588,7 +571,6 @@ public sealed class LocalBrowserTestServer :
 
                 <a
                     id="nextLink"
-                    class="next-button"
                     href="/next">
                     Go to next page
                 </a>
@@ -627,7 +609,6 @@ public sealed class LocalBrowserTestServer :
                     revealButton.addEventListener(
                         "click",
                         () => {
-
                             setTimeout(
                                 () => {
                                     asyncMessage.classList.remove(
@@ -636,7 +617,6 @@ public sealed class LocalBrowserTestServer :
                                 },
                                 600
                             );
-
                         }
                     );
 
@@ -682,7 +662,6 @@ public sealed class LocalBrowserTestServer :
                             departmentStatus.textContent =
                                 "Department: " +
                                 option.text;
-
                         }
                     );
 
@@ -712,7 +691,6 @@ public sealed class LocalBrowserTestServer :
                                 uploadStatus.textContent =
                                     "Uploaded: none";
                             }
-
                         }
                     );
 
@@ -736,19 +714,7 @@ public sealed class LocalBrowserTestServer :
     }
 
     // =========================================================
-    // VERSION 0.6F
-    // VISUAL FALLBACK PAGE
-    //
-    // Important:
-    // The 3 buttons have:
-    //
-    // - no text
-    // - no aria-label
-    // - no title
-    // - no id
-    // - no name
-    //
-    // Their visible labels exist only inside CSS background SVGs.
+    // 0.6F VISION FALLBACK PAGE
     // =========================================================
 
     private static async Task SendVisionFallbackPageAsync(
@@ -773,8 +739,6 @@ public sealed class LocalBrowserTestServer :
 
                     body {
                         font-family: Segoe UI, Arial, sans-serif;
-                        margin: 0;
-                        padding: 0;
                         background: #f6f7f9;
                     }
 
@@ -783,47 +747,24 @@ public sealed class LocalBrowserTestServer :
                         margin: 55px auto;
                     }
 
-                    .header {
-                        margin-bottom: 28px;
-                    }
-
-                    h1 {
-                        margin-bottom: 8px;
-                        font-size: 34px;
-                    }
-
-                    .subtitle {
-                        color: #555;
-                    }
-
                     .panel {
                         background: white;
-                        border: 1px solid #c9cdd3;
+                        border: 1px solid #ccc;
                         border-radius: 12px;
                         padding: 34px;
-                        box-shadow: 0 3px 16px rgba(0,0,0,0.08);
-                    }
-
-                    .warning {
-                        border-left: 5px solid #555;
-                        padding: 15px 18px;
-                        background: #fafafa;
-                        margin-bottom: 30px;
                     }
 
                     #mysteryButtons {
                         display: flex;
                         gap: 22px;
                         justify-content: center;
-                        margin-top: 30px;
-                        margin-bottom: 28px;
+                        margin: 30px 0;
                     }
 
                     .visual-choice {
                         width: 210px;
                         height: 64px;
                         border: 0;
-                        padding: 0;
                         background-color: transparent;
                         background-repeat: no-repeat;
                         background-position: center;
@@ -831,33 +772,19 @@ public sealed class LocalBrowserTestServer :
                         cursor: pointer;
                     }
 
-                    /*
-                       LEFT BUTTON
-                       Visible label exists only in this background image.
-                    */
-
                     #mysteryButtons button:nth-child(1) {
                         background-image:
-                            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='210' height='64'%3E%3Crect width='210' height='64' rx='8' fill='%23f1f1f1' stroke='%23777'/%3E%3Ctext x='105' y='39' font-family='Segoe UI,Arial' font-size='18' text-anchor='middle' fill='%23111'%3ECancel%3C/text%3E%3C/svg%3E");
+                            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='210' height='64'%3E%3Crect width='210' height='64' rx='8' fill='%23eeeeee' stroke='%23777'/%3E%3Ctext x='105' y='39' font-family='Segoe UI,Arial' font-size='18' text-anchor='middle' fill='%23111'%3ECancel%3C/text%3E%3C/svg%3E");
                     }
-
-                    /*
-                       MIDDLE BUTTON
-                       This is the target.
-                    */
 
                     #mysteryButtons button:nth-child(2) {
                         background-image:
                             url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='210' height='64'%3E%3Crect width='210' height='64' rx='8' fill='%23dce9ff' stroke='%23506ca8'/%3E%3Ctext x='105' y='39' font-family='Segoe UI,Arial' font-size='18' text-anchor='middle' fill='%23111'%3EContinue%20Review%3C/text%3E%3C/svg%3E");
                     }
 
-                    /*
-                       RIGHT BUTTON
-                    */
-
                     #mysteryButtons button:nth-child(3) {
                         background-image:
-                            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='210' height='64'%3E%3Crect width='210' height='64' rx='8' fill='%23f1f1f1' stroke='%23777'/%3E%3Ctext x='105' y='39' font-family='Segoe UI,Arial' font-size='18' text-anchor='middle' fill='%23111'%3EDefer%3C/text%3E%3C/svg%3E");
+                            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='210' height='64'%3E%3Crect width='210' height='64' rx='8' fill='%23eeeeee' stroke='%23777'/%3E%3Ctext x='105' y='39' font-family='Segoe UI,Arial' font-size='18' text-anchor='middle' fill='%23111'%3EDefer%3C/text%3E%3C/svg%3E");
                     }
 
                     #fallbackStatus {
@@ -865,13 +792,6 @@ public sealed class LocalBrowserTestServer :
                         padding: 14px;
                         border: 1px solid #aaa;
                         font-family: Consolas, monospace;
-                        background: #fafafa;
-                    }
-
-                    .explanation {
-                        color: #555;
-                        font-size: 14px;
-                        margin-top: 20px;
                     }
 
                 </style>
@@ -882,32 +802,15 @@ public sealed class LocalBrowserTestServer :
 
                 <div class="page">
 
-                    <div class="header">
-
-                        <h1>
-                            Operator AI Vision Fallback Test
-                        </h1>
-
-                        <div class="subtitle">
-                            Version 0.6F controlled visual recovery test
-                        </div>
-
-                    </div>
+                    <h1>
+                        Operator AI Vision Fallback Test
+                    </h1>
 
                     <div class="panel">
 
-                        <div class="warning">
-
-                            <strong>
-                                Approval review
-                            </strong>
-
-                            <br>
-
-                            Choose the visually labeled action required
-                            to continue the review workflow.
-
-                        </div>
+                        <p>
+                            Choose the visually appropriate action.
+                        </p>
 
                         <div id="mysteryButtons">
 
@@ -930,15 +833,6 @@ public sealed class LocalBrowserTestServer :
 
                         <div id="fallbackStatus">
                             Result: no action yet
-                        </div>
-
-                        <div class="explanation">
-
-                            The buttons intentionally contain no DOM text,
-                            accessible name, title, id or name.
-
-                            Their visible labels are rendered only as images.
-
                         </div>
 
                     </div>
@@ -978,6 +872,419 @@ public sealed class LocalBrowserTestServer :
                         () => {
                             status.textContent =
                                 "Result: defer selected";
+                        }
+                    );
+
+                </script>
+
+            </body>
+
+            </html>
+            """;
+
+        await SendResponseAsync(
+            stream,
+            "200 OK",
+            "text/html; charset=utf-8",
+            Encoding.UTF8.GetBytes(
+                html
+            ),
+            null,
+            cancellationToken
+        );
+    }
+
+    // =========================================================
+    // VERSION 0.6F-4
+    // CANVAS-ONLY COORDINATE TEST
+    //
+    // There are NO DOM buttons inside the canvas.
+    // The controls exist only as drawn pixels.
+    // =========================================================
+
+    private static async Task SendCoordinateCanvasPageAsync(
+        NetworkStream stream,
+        CancellationToken cancellationToken)
+    {
+        string html =
+            """
+            <!DOCTYPE html>
+
+            <html lang="en">
+
+            <head>
+
+                <meta charset="utf-8">
+
+                <title>
+                    Operator AI Canvas Coordinate Test
+                </title>
+
+                <style>
+
+                    html,
+                    body {
+                        margin: 0;
+                        padding: 0;
+                    }
+
+                    body {
+                        font-family: Segoe UI, Arial, sans-serif;
+                        background: #eef1f5;
+                        color: #111;
+                    }
+
+                    .page {
+                        width: 1040px;
+                        margin: 38px auto;
+                    }
+
+                    h1 {
+                        margin: 0 0 8px 0;
+                        font-size: 32px;
+                    }
+
+                    .subtitle {
+                        color: #555;
+                        margin-bottom: 18px;
+                    }
+
+                    .panel {
+                        background: white;
+                        border: 1px solid #c8ccd2;
+                        border-radius: 12px;
+                        padding: 28px 38px 30px 38px;
+                        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+                    }
+
+                    .instruction {
+                        border-left: 5px solid #536a91;
+                        background: #f7f9fc;
+                        padding: 13px 16px;
+                        margin-bottom: 18px;
+                    }
+
+                    #visualCanvas {
+                        width: 960px;
+                        height: 420px;
+                        display: block;
+                        border: 1px solid #888;
+                        background: white;
+                    }
+
+                    #canvasStatus {
+                        margin-top: 18px;
+                        padding: 13px;
+                        border: 1px solid #999;
+                        background: #fafafa;
+                        font-family: Consolas, monospace;
+                        font-size: 16px;
+                    }
+
+                </style>
+
+            </head>
+
+            <body>
+
+                <div class="page">
+
+                    <h1>
+                        Operator AI Canvas Coordinate Test
+                    </h1>
+
+                    <div class="subtitle">
+                        Version 0.6F visual coordinate interaction
+                    </div>
+
+                    <div class="panel">
+
+                        <div class="instruction">
+
+                            The action controls below are rendered entirely
+                            inside a canvas.
+
+                            Choose the action that continues the review
+                            workflow.
+
+                        </div>
+
+                        <canvas
+                            id="visualCanvas"
+                            width="960"
+                            height="420">
+                        </canvas>
+
+                        <div id="canvasStatus">
+                            Result: no canvas action yet
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <script>
+
+                    const canvas =
+                        document.getElementById(
+                            "visualCanvas"
+                        );
+
+                    const ctx =
+                        canvas.getContext(
+                            "2d"
+                        );
+
+                    const status =
+                        document.getElementById(
+                            "canvasStatus"
+                        );
+
+                    const actions = [
+                        {
+                            x: 70,
+                            y: 210,
+                            width: 240,
+                            height: 90,
+                            label: "Cancel"
+                        },
+                        {
+                            x: 360,
+                            y: 210,
+                            width: 240,
+                            height: 90,
+                            label: "Continue Review"
+                        },
+                        {
+                            x: 650,
+                            y: 210,
+                            width: 240,
+                            height: 90,
+                            label: "Defer"
+                        }
+                    ];
+
+                    function roundedRect(
+                        x,
+                        y,
+                        width,
+                        height,
+                        radius)
+                    {
+                        ctx.beginPath();
+
+                        ctx.roundRect(
+                            x,
+                            y,
+                            width,
+                            height,
+                            radius
+                        );
+
+                        ctx.closePath();
+                    }
+
+                    function draw()
+                    {
+                        ctx.clearRect(
+                            0,
+                            0,
+                            canvas.width,
+                            canvas.height
+                        );
+
+                        ctx.fillStyle =
+                            "#ffffff";
+
+                        ctx.fillRect(
+                            0,
+                            0,
+                            canvas.width,
+                            canvas.height
+                        );
+
+                        ctx.fillStyle =
+                            "#1f2937";
+
+                        ctx.font =
+                            "bold 27px Segoe UI, Arial";
+
+                        ctx.textAlign =
+                            "center";
+
+                        ctx.fillText(
+                            "Approval Review",
+                            480,
+                            62
+                        );
+
+                        ctx.fillStyle =
+                            "#4b5563";
+
+                        ctx.font =
+                            "18px Segoe UI, Arial";
+
+                        ctx.fillText(
+                            "Select the action required to continue.",
+                            480,
+                            99
+                        );
+
+                        ctx.strokeStyle =
+                            "#d1d5db";
+
+                        ctx.lineWidth =
+                            2;
+
+                        ctx.beginPath();
+
+                        ctx.moveTo(
+                            80,
+                            135
+                        );
+
+                        ctx.lineTo(
+                            880,
+                            135
+                        );
+
+                        ctx.stroke();
+
+                        actions.forEach(
+                            (action, index) => {
+
+                                if (index === 1)
+                                {
+                                    ctx.fillStyle =
+                                        "#dbeafe";
+
+                                    ctx.strokeStyle =
+                                        "#3b63a3";
+                                }
+                                else
+                                {
+                                    ctx.fillStyle =
+                                        "#f3f4f6";
+
+                                    ctx.strokeStyle =
+                                        "#777777";
+                                }
+
+                                ctx.lineWidth =
+                                    2;
+
+                                roundedRect(
+                                    action.x,
+                                    action.y,
+                                    action.width,
+                                    action.height,
+                                    12
+                                );
+
+                                ctx.fill();
+                                ctx.stroke();
+
+                                ctx.fillStyle =
+                                    "#111827";
+
+                                ctx.font =
+                                    index === 1
+                                        ? "bold 21px Segoe UI, Arial"
+                                        : "20px Segoe UI, Arial";
+
+                                ctx.textAlign =
+                                    "center";
+
+                                ctx.textBaseline =
+                                    "middle";
+
+                                ctx.fillText(
+                                    action.label,
+                                    action.x +
+                                    action.width / 2,
+                                    action.y +
+                                    action.height / 2
+                                );
+                            }
+                        );
+
+                        ctx.fillStyle =
+                            "#6b7280";
+
+                        ctx.font =
+                            "15px Segoe UI, Arial";
+
+                        ctx.textAlign =
+                            "center";
+
+                        ctx.textBaseline =
+                            "alphabetic";
+
+                        ctx.fillText(
+                            "Canvas-rendered controls — no DOM buttons exist here",
+                            480,
+                            370
+                        );
+                    }
+
+                    draw();
+
+                    canvas.addEventListener(
+                        "click",
+                        event => {
+
+                            const rect =
+                                canvas.getBoundingClientRect();
+
+                            const x =
+                                event.clientX -
+                                rect.left;
+
+                            const y =
+                                event.clientY -
+                                rect.top;
+
+                            if (
+                                x >= 70 &&
+                                x <= 310 &&
+                                y >= 210 &&
+                                y <= 300
+                            )
+                            {
+                                status.textContent =
+                                    "Result: canvas cancel selected";
+
+                                return;
+                            }
+
+                            if (
+                                x >= 360 &&
+                                x <= 600 &&
+                                y >= 210 &&
+                                y <= 300
+                            )
+                            {
+                                status.textContent =
+                                    "Result: canvas review activated";
+
+                                return;
+                            }
+
+                            if (
+                                x >= 650 &&
+                                x <= 890 &&
+                                y >= 210 &&
+                                y <= 300
+                            )
+                            {
+                                status.textContent =
+                                    "Result: canvas defer selected";
+
+                                return;
+                            }
+
+                            status.textContent =
+                                "Result: canvas background clicked";
                         }
                     );
 
@@ -1094,7 +1401,7 @@ public sealed class LocalBrowserTestServer :
     }
 
     // =========================================================
-    // EMPTY RESPONSE
+    // EMPTY
     // =========================================================
 
     private static async Task SendEmptyResponseAsync(
@@ -1112,7 +1419,7 @@ public sealed class LocalBrowserTestServer :
     }
 
     // =========================================================
-    // SEND RESPONSE
+    // RESPONSE
     // =========================================================
 
     private static async Task SendResponseAsync(

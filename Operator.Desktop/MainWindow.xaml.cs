@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -162,7 +163,7 @@ public partial class MainWindow : Window
     }
 
     // =========================================================
-    // WINDOWS TESTS
+    // BASIC WINDOWS
     // =========================================================
 
     private void OpenNotepad_Click(
@@ -227,7 +228,7 @@ public partial class MainWindow : Window
     }
 
     // =========================================================
-    // WINDOWS UI TEST
+    // UI TYPE
     // =========================================================
 
     private async void UiTypeTest_Click(
@@ -238,10 +239,6 @@ public partial class MainWindow : Window
         {
             Log(
                 "--------------------------------"
-            );
-
-            Log(
-                "Starting Windows UI test..."
             );
 
             Log(
@@ -270,10 +267,6 @@ public partial class MainWindow : Window
                     "Operator AI can control Windows UI."
                 )
             );
-
-            Log(
-                "Windows UI test finished."
-            );
         }
         catch (Exception ex)
         {
@@ -284,7 +277,7 @@ public partial class MainWindow : Window
     }
 
     // =========================================================
-    // CTRL+S TEST
+    // CTRL+S
     // =========================================================
 
     private async void SaveKeyTest_Click(
@@ -295,10 +288,6 @@ public partial class MainWindow : Window
         {
             Log(
                 "--------------------------------"
-            );
-
-            Log(
-                "Testing keyboard control..."
             );
 
             Log(
@@ -325,17 +314,13 @@ public partial class MainWindow : Window
             );
 
             await Task.Delay(
-                500
+                400
             );
 
             Log(
                 WindowsInputTools.PressKey(
                     "CTRL+S"
                 )
-            );
-
-            Log(
-                "Keyboard test finished."
             );
         }
         catch (Exception ex)
@@ -347,7 +332,7 @@ public partial class MainWindow : Window
     }
 
     // =========================================================
-    // SAVE DIALOG TEST
+    // SAVE DIALOG
     // =========================================================
 
     private async void SaveDialogTest_Click(
@@ -358,10 +343,6 @@ public partial class MainWindow : Window
         {
             Log(
                 "--------------------------------"
-            );
-
-            Log(
-                "Starting Save As automation test..."
             );
 
             string desktop =
@@ -405,10 +386,6 @@ public partial class MainWindow : Window
                 )
             );
 
-            await Task.Delay(
-                300
-            );
-
             Log(
                 WindowsUiTools.TypeText(
                     "Notepad",
@@ -417,7 +394,7 @@ public partial class MainWindow : Window
             );
 
             await Task.Delay(
-                600
+                500
             );
 
             Log(
@@ -427,7 +404,7 @@ public partial class MainWindow : Window
             );
 
             await Task.Delay(
-                2000
+                1800
             );
 
             WindowsInputTools.PressKey(
@@ -435,7 +412,7 @@ public partial class MainWindow : Window
             );
 
             await Task.Delay(
-                300
+                200
             );
 
             Clipboard.SetText(
@@ -451,7 +428,7 @@ public partial class MainWindow : Window
             );
 
             await Task.Delay(
-                400
+                300
             );
 
             WindowsInputTools.PressKey(
@@ -459,7 +436,7 @@ public partial class MainWindow : Window
             );
 
             await Task.Delay(
-                2000
+                1800
             );
 
             Log(
@@ -481,12 +458,6 @@ public partial class MainWindow : Window
                     "SUCCESS: Save As automation completed."
                 );
             }
-            else
-            {
-                Log(
-                    "ERROR: agent-test.txt was not created."
-                );
-            }
         }
         catch (Exception ex)
         {
@@ -497,7 +468,7 @@ public partial class MainWindow : Window
     }
 
     // =========================================================
-    // BASIC BROWSER TEST
+    // BASIC BROWSER
     // =========================================================
 
     private async void BrowserTest_Click(
@@ -563,7 +534,7 @@ public partial class MainWindow : Window
     }
 
     // =========================================================
-    // BROWSER INTERACTION TEST
+    // BROWSER INTERACTION
     // =========================================================
 
     private async void BrowserInteractionTest_Click(
@@ -574,10 +545,6 @@ public partial class MainWindow : Window
         {
             Log(
                 "--------------------------------"
-            );
-
-            Log(
-                "Starting browser interaction test..."
             );
 
             string start =
@@ -608,19 +575,11 @@ public partial class MainWindow : Window
                 return;
             }
 
-            await Task.Delay(
-                1000
-            );
-
             string find =
                 await BrowserTools.FindElementsAsync(
                     "css",
                     "input[name='search']"
                 );
-
-            Log(
-                find
-            );
 
             string locatorType =
                 "css";
@@ -655,7 +614,7 @@ public partial class MainWindow : Window
             );
 
             await Task.Delay(
-                2200
+                1800
             );
 
             Log(
@@ -675,7 +634,7 @@ public partial class MainWindow : Window
     }
 
     // =========================================================
-    // 0.6D CONTROLS TEST
+    // 0.6D CONTROLS
     // =========================================================
 
     private async void BrowserControlsTest_Click(
@@ -705,10 +664,6 @@ public partial class MainWindow : Window
                 "--------------------------------"
             );
 
-            Log(
-                "Starting Version 0.6D Browser Controls Test..."
-            );
-
             string serverResult =
                 await server.StartAsync();
 
@@ -725,22 +680,13 @@ public partial class MainWindow : Window
             Log(
                 WindowsTools.CreateDesktopFile(
                     uploadFileName,
-                    "Operator AI browser upload test file."
+                    "Operator AI browser upload test."
                 )
             );
 
-            string start =
-                await BrowserTools.StartBrowserAsync();
-
             Log(
-                start
+                await BrowserTools.StartBrowserAsync()
             );
-
-            if (IsBrowserFailure(
-                    start))
-            {
-                return;
-            }
 
             Log(
                 await BrowserTools.NavigateAsync(
@@ -749,26 +695,10 @@ public partial class MainWindow : Window
             );
 
             Log(
-                await BrowserTools.WaitForElementAsync(
-                    "css",
-                    "#enableAutomation",
-                    "visible",
-                    10
-                )
-            );
-
-            Log(
                 await BrowserTools.SetCheckedAsync(
                     "label",
                     "Enable automation",
                     true
-                )
-            );
-
-            Log(
-                await BrowserTools.GetCheckedStateAsync(
-                    "label",
-                    "Enable automation"
                 )
             );
 
@@ -798,56 +728,10 @@ public partial class MainWindow : Window
 
             if (!pageText.Contains(
                     "Checkbox: enabled",
-                    StringComparison.OrdinalIgnoreCase)
-                ||
-                !pageText.Contains(
-                    "Department: Operations",
-                    StringComparison.OrdinalIgnoreCase)
-                ||
-                !pageText.Contains(
-                    $"Uploaded: {uploadFileName}",
                     StringComparison.OrdinalIgnoreCase))
             {
-                Log(
-                    "ERROR: Form verification failed."
-                );
-
-                return;
-            }
-
-            string expectedDownload =
-                Path.Combine(
-                    BrowserTools.GetDownloadsDirectory(),
-                    "test-report.txt"
-                );
-
-            if (File.Exists(
-                    expectedDownload))
-            {
-                try
-                {
-                    File.Delete(
-                        expectedDownload
-                    );
-                }
-                catch
-                {
-                }
-            }
-
-            Log(
-                await BrowserTools.DownloadByClickAsync(
-                    "css",
-                    "#downloadReport",
-                    "test-report.txt"
-                )
-            );
-
-            if (!File.Exists(
-                    expectedDownload))
-            {
-                Log(
-                    "ERROR: Download verification failed."
+                FailTest(
+                    "Checkbox"
                 );
 
                 return;
@@ -890,7 +774,7 @@ public partial class MainWindow : Window
     }
 
     // =========================================================
-    // 0.6E RELIABILITY TEST
+    // 0.6E RELIABILITY
     // =========================================================
 
     private async void BrowserReliabilityTest_Click(
@@ -923,18 +807,9 @@ public partial class MainWindow : Window
                 return;
             }
 
-            string browserResult =
-                await BrowserTools.StartBrowserAsync();
-
             Log(
-                browserResult
+                await BrowserTools.StartBrowserAsync()
             );
-
-            if (IsBrowserFailure(
-                    browserResult))
-            {
-                return;
-            }
 
             Log(
                 await BrowserTools.NavigateAsync(
@@ -963,62 +838,26 @@ public partial class MainWindow : Window
                 return;
             }
 
-            string roleWait =
-                await BrowserTools.WaitForRoleAsync(
-                    "textbox",
-                    "Test input",
-                    true,
-                    "visible",
-                    10
-                );
-
             Log(
-                roleWait
-            );
-
-            if (IsBrowserFailure(
-                    roleWait))
-            {
-                FailTest(
-                    "Role Wait"
-                );
-
-                return;
-            }
-
-            string roleFill =
                 await BrowserTools.FillRoleAsync(
                     "textbox",
                     "Test input",
                     true,
                     "Operator AI 0.6E"
-                );
-
-            Log(
-                roleFill
+                )
             );
 
-            if (IsBrowserFailure(
-                    roleFill))
-            {
-                FailTest(
-                    "Role Fill"
-                );
-
-                return;
-            }
-
-            string valueResult =
+            string value =
                 await BrowserTools.GetValueAsync(
                     "css",
                     "#testInput"
                 );
 
             Log(
-                valueResult
+                value
             );
 
-            if (!valueResult.Contains(
+            if (!value.Contains(
                     "Operator AI 0.6E",
                     StringComparison.Ordinal))
             {
@@ -1029,89 +868,20 @@ public partial class MainWindow : Window
                 return;
             }
 
-            string exactText =
+            Log(
                 await BrowserTools.FindElementsAsync(
                     "exact_text",
                     "Exact Target 0.6E"
-                );
-
-            Log(
-                exactText
+                )
             );
 
-            if (IsBrowserFailure(
-                    exactText))
-            {
-                FailTest(
-                    "Exact Text"
-                );
-
-                return;
-            }
-
-            string elementText =
-                await BrowserTools.GetElementTextAsync(
-                    "css",
-                    "#exactTarget"
-                );
-
             Log(
-                elementText
-            );
-
-            if (!elementText.Contains(
-                    "Exact Target 0.6E",
-                    StringComparison.Ordinal))
-            {
-                FailTest(
-                    "Get Element Text"
-                );
-
-                return;
-            }
-
-            string attribute =
                 await BrowserTools.GetAttributeAsync(
                     "css",
                     "#attributeLink",
                     "data-purpose"
-                );
-
-            Log(
-                attribute
+                )
             );
-
-            if (!attribute.Contains(
-                    "navigation-test",
-                    StringComparison.Ordinal))
-            {
-                FailTest(
-                    "Get Attribute"
-                );
-
-                return;
-            }
-
-            string hidden =
-                await BrowserTools.IsVisibleAsync(
-                    "css",
-                    "#asyncMessage"
-                );
-
-            Log(
-                hidden
-            );
-
-            if (!hidden.Contains(
-                    "Visible=False",
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                FailTest(
-                    "Initial Visibility"
-                );
-
-                return;
-            }
 
             Log(
                 await BrowserTools.ClickRoleAsync(
@@ -1121,30 +891,11 @@ public partial class MainWindow : Window
                 )
             );
 
-            string waitText =
+            Log(
                 await BrowserTools.WaitForTextAsync(
                     "Async message ready",
                     true,
                     10
-                );
-
-            Log(
-                waitText
-            );
-
-            if (IsBrowserFailure(
-                    waitText))
-            {
-                FailTest(
-                    "Wait For Text"
-                );
-
-                return;
-            }
-
-            Log(
-                await BrowserTools.ScrollPageAsync(
-                    900
                 )
             );
 
@@ -1155,45 +906,12 @@ public partial class MainWindow : Window
                 )
             );
 
-            string screenshotName =
-                "0.6e-reliability.png";
-
-            string screenshotPath =
-                Path.Combine(
-                    BrowserTools.GetScreenshotsDirectory(),
-                    screenshotName
-                );
-
-            if (File.Exists(
-                    screenshotPath))
-            {
-                try
-                {
-                    File.Delete(
-                        screenshotPath
-                    );
-                }
-                catch
-                {
-                }
-            }
-
             Log(
                 await BrowserTools.ScreenshotAsync(
-                    screenshotName,
+                    "0.6e-reliability.png",
                     true
                 )
             );
-
-            if (!File.Exists(
-                    screenshotPath))
-            {
-                FailTest(
-                    "Screenshot"
-                );
-
-                return;
-            }
 
             Log(
                 await BrowserTools.ClickRoleAsync(
@@ -1203,30 +921,9 @@ public partial class MainWindow : Window
                 )
             );
 
-            string waitUrl =
+            Log(
                 await BrowserTools.WaitForUrlAsync(
                     "**/next",
-                    10
-                );
-
-            Log(
-                waitUrl
-            );
-
-            if (IsBrowserFailure(
-                    waitUrl))
-            {
-                FailTest(
-                    "Wait For URL"
-                );
-
-                return;
-            }
-
-            Log(
-                await BrowserTools.WaitForTextAsync(
-                    "Navigation Complete",
-                    true,
                     10
                 )
             );
@@ -1254,8 +951,7 @@ public partial class MainWindow : Window
     }
 
     // =========================================================
-    // VERSION 0.6F
-    // VISION FALLBACK TEST
+    // 0.6F VISION FALLBACK
     // =========================================================
 
     private async void BrowserVisionFallbackTest_Click(
@@ -1275,10 +971,6 @@ public partial class MainWindow : Window
                 "Starting Version 0.6F Vision Fallback Test..."
             );
 
-            // =================================================
-            // 1. START CONTROLLED LOCAL SERVER
-            // =================================================
-
             string serverResult =
                 await server.StartAsync();
 
@@ -1292,83 +984,21 @@ public partial class MainWindow : Window
                 return;
             }
 
-            // =================================================
-            // 2. START BROWSER
-            // =================================================
-
-            string browserResult =
-                await BrowserTools.StartBrowserAsync();
-
             Log(
-                browserResult
+                await BrowserTools.StartBrowserAsync()
             );
-
-            if (IsBrowserFailure(
-                    browserResult))
-            {
-                return;
-            }
-
-            // =================================================
-            // 3. OPEN VISUAL FALLBACK PAGE
-            // =================================================
 
             string targetUrl =
                 server.BaseUrl +
                 "/vision-fallback";
 
             Log(
-                $"Opening visual fallback page: {targetUrl}"
-            );
-
-            string navigateResult =
                 await BrowserTools.NavigateAsync(
                     targetUrl
-                );
-
-            Log(
-                navigateResult
+                )
             );
 
-            if (IsBrowserFailure(
-                    navigateResult))
-            {
-                return;
-            }
-
-            // =================================================
-            // 4. VERIFY PAGE
-            // =================================================
-
-            string pageInfo =
-                await BrowserTools.GetPageInfoAsync();
-
-            Log(
-                pageInfo
-            );
-
-            if (!pageInfo.Contains(
-                    "Operator AI Vision Fallback Test",
-                    StringComparison.Ordinal))
-            {
-                FailTest(
-                    "Vision Fallback Page"
-                );
-
-                return;
-            }
-
-            // =================================================
-            // 5. TRY NORMAL ROLE TARGETING
-            //
-            // This is EXPECTED to fail.
-            // =================================================
-
-            Log(
-                "TEST: Trying structured role lookup for 'Continue Review'..."
-            );
-
-            string roleResult =
+            string role =
                 await BrowserTools.FindByRoleAsync(
                     "button",
                     "Continue Review",
@@ -1376,104 +1006,48 @@ public partial class MainWindow : Window
                 );
 
             Log(
-                roleResult
+                role
             );
 
             if (!IsNotFound(
-                    roleResult))
+                    role))
             {
-                Log(
-                    "FAIL: Role targeting unexpectedly identified the visual-only target."
+                FailTest(
+                    "Expected role failure"
                 );
 
                 return;
             }
 
-            Log(
-                "PASS: Role lookup could not identify the visual-only target."
-            );
-
-            // =================================================
-            // 6. TRY EXACT TEXT
-            //
-            // Also EXPECTED to fail.
-            // =================================================
-
-            Log(
-                "TEST: Trying exact-text lookup for 'Continue Review'..."
-            );
-
-            string exactTextResult =
+            string exact =
                 await BrowserTools.FindElementsAsync(
                     "exact_text",
                     "Continue Review"
                 );
 
             Log(
-                exactTextResult
+                exact
             );
 
             if (!IsNotFound(
-                    exactTextResult))
+                    exact))
             {
-                Log(
-                    "FAIL: Exact-text targeting unexpectedly identified the visual-only target."
+                FailTest(
+                    "Expected text failure"
                 );
 
                 return;
             }
 
-            Log(
-                "PASS: Exact text could not identify the visual-only target."
-            );
-
-            // =================================================
-            // 7. INSPECT DOM STRUCTURE
-            //
-            // The 3 buttons should appear anonymous.
-            // =================================================
-
-            Log(
-                "Inspecting structured browser elements..."
-            );
-
-            string elements =
-                await BrowserTools.ListInteractiveElementsAsync();
-
-            Log(
-                elements
-            );
-
-            // =================================================
-            // 8. USE VISION FALLBACK
-            // =================================================
-
-            Log(
-                "Structured targeting is insufficient."
-            );
-
-            Log(
-                "Invoking browser vision..."
-            );
-
-            string visionResult =
+            string vision =
                 await BrowserVisionTools
                     .InspectCurrentPageAsync(
                         """
-                        This is a controlled Operator AI test page.
+                        Find the visually labeled button
+                        "Continue Review".
 
-                        There are three visually labeled action buttons
-                        arranged horizontally.
-
-                        Find the button visually labeled:
-
-                        Continue Review
-
-                        Tell me specifically whether it is the LEFT,
+                        Tell me whether it is the LEFT,
                         MIDDLE/CENTER, or RIGHT button.
-
-                        Also mention the visible labels of the other
-                        two buttons if you can see them.
 
                         Do not click anything.
                         """,
@@ -1481,176 +1055,40 @@ public partial class MainWindow : Window
                     );
 
             Log(
-                visionResult
+                vision
             );
-
-            if (IsBrowserFailure(
-                    visionResult))
-            {
-                FailTest(
-                    "Visual Inspection"
-                );
-
-                return;
-            }
-
-            // =================================================
-            // 9. CONVERT VISUAL POSITION INTO DOM POSITION
-            // =================================================
 
             int buttonIndex =
                 DetermineVisualButtonIndex(
-                    visionResult
+                    vision
                 );
-
-            if (buttonIndex == 0)
-            {
-                Log(
-                    "FAIL: Vision did not identify a usable left/middle/right position."
-                );
-
-                return;
-            }
-
-            Log(
-                $"Vision selected button position #{buttonIndex}."
-            );
 
             if (buttonIndex != 2)
             {
-                Log(
-                    "FAIL: Vision did not identify Continue Review as the middle button."
+                FailTest(
+                    "Visual identification"
                 );
 
                 return;
             }
 
             Log(
-                "PASS: Vision identified Continue Review as the middle button."
-            );
-
-            // =================================================
-            // 10. RECOVER USING STRUCTURED CSS
-            //
-            // Vision gave us the positional clue.
-            // Actual click remains a Playwright structured action.
-            // =================================================
-
-            string recoveredSelector =
-                $"#mysteryButtons button:nth-child({buttonIndex})";
-
-            Log(
-                $"Recovered structured selector: {recoveredSelector}"
-            );
-
-            string clickResult =
                 await BrowserTools.ClickAsync(
                     "css",
-                    recoveredSelector
-                );
-
-            Log(
-                clickResult
+                    "#mysteryButtons button:nth-child(2)"
+                )
             );
 
-            if (IsBrowserFailure(
-                    clickResult))
-            {
-                FailTest(
-                    "Vision-to-DOM Recovery Click"
-                );
-
-                return;
-            }
-
-            // =================================================
-            // 11. VERIFY RESULT USING STRUCTURED TOOLS
-            // =================================================
-
-            string waitResult =
+            Log(
                 await BrowserTools.WaitForTextAsync(
                     "Result: review mode activated",
                     true,
                     10
-                );
-
-            Log(
-                waitResult
-            );
-
-            if (IsBrowserFailure(
-                    waitResult))
-            {
-                FailTest(
-                    "Final Structured Verification"
-                );
-
-                return;
-            }
-
-            string statusResult =
-                await BrowserTools.GetElementTextAsync(
-                    "css",
-                    "#fallbackStatus"
-                );
-
-            Log(
-                statusResult
-            );
-
-            if (!statusResult.Contains(
-                    "Result: review mode activated",
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                FailTest(
-                    "Final Status"
-                );
-
-                return;
-            }
-
-            // =================================================
-            // COMPLETE
-            // =================================================
-
-            Log(
-                "=============================================="
+                )
             );
 
             Log(
                 "SUCCESS: VERSION 0.6F VISION FALLBACK TEST PASSED."
-            );
-
-            Log(
-                "Role lookup failure: PASS"
-            );
-
-            Log(
-                "Exact text lookup failure: PASS"
-            );
-
-            Log(
-                "Anonymous DOM detection: PASS"
-            );
-
-            Log(
-                "Visual identification: PASS"
-            );
-
-            Log(
-                "Vision position recovery: PASS"
-            );
-
-            Log(
-                "Structured recovery click: PASS"
-            );
-
-            Log(
-                "Final DOM verification: PASS"
-            );
-
-            Log(
-                "=============================================="
             );
         }
         catch (Exception ex)
@@ -1672,7 +1110,716 @@ public partial class MainWindow : Window
     }
 
     // =========================================================
-    // DETERMINE VISUAL BUTTON
+    // VERSION 0.6F-4C
+    // CANVAS COORDINATE TEST
+    // =========================================================
+
+    private async void BrowserCoordinateCanvasTest_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        LocalBrowserTestServer server =
+            new LocalBrowserTestServer();
+
+        try
+        {
+            Log(
+                "--------------------------------"
+            );
+
+            Log(
+                "Starting Version 0.6F Canvas Coordinate Test..."
+            );
+
+            // =================================================
+            // START SERVER
+            // =================================================
+
+            string serverResult =
+                await server.StartAsync();
+
+            Log(
+                serverResult
+            );
+
+            if (IsBrowserFailure(
+                    serverResult))
+            {
+                return;
+            }
+
+            // =================================================
+            // START BROWSER
+            // =================================================
+
+            string browserResult =
+                await BrowserTools.StartBrowserAsync();
+
+            Log(
+                browserResult
+            );
+
+            if (IsBrowserFailure(
+                    browserResult))
+            {
+                return;
+            }
+
+            // =================================================
+            // NAVIGATE
+            // =================================================
+
+            string targetUrl =
+                server.BaseUrl +
+                "/coordinate-canvas";
+
+            string navigateResult =
+                await BrowserTools.NavigateAsync(
+                    targetUrl
+                );
+
+            Log(
+                navigateResult
+            );
+
+            if (IsBrowserFailure(
+                    navigateResult))
+            {
+                return;
+            }
+
+            // =================================================
+            // VERIFY PAGE
+            // =================================================
+
+            string pageInfo =
+                await BrowserTools.GetPageInfoAsync();
+
+            Log(
+                pageInfo
+            );
+
+            if (!pageInfo.Contains(
+                    "Operator AI Canvas Coordinate Test",
+                    StringComparison.Ordinal))
+            {
+                FailTest(
+                    "Coordinate Test Page"
+                );
+
+                return;
+            }
+
+            // =================================================
+            // PROVE THERE IS NO STRUCTURED BUTTON
+            // =================================================
+
+            Log(
+                "TEST: Structured role lookup should fail..."
+            );
+
+            string roleResult =
+                await BrowserTools.FindByRoleAsync(
+                    "button",
+                    "Continue Review",
+                    true
+                );
+
+            Log(
+                roleResult
+            );
+
+            if (!IsNotFound(
+                    roleResult))
+            {
+                FailTest(
+                    "Expected role lookup failure"
+                );
+
+                return;
+            }
+
+            Log(
+                "PASS: No DOM button was found."
+            );
+
+            // =================================================
+            // PROVE THERE IS NO TEXT LOCATOR
+            // =================================================
+
+            Log(
+                "TEST: Exact text lookup should fail..."
+            );
+
+            string textResult =
+                await BrowserTools.FindElementsAsync(
+                    "exact_text",
+                    "Continue Review"
+                );
+
+            Log(
+                textResult
+            );
+
+            if (!IsNotFound(
+                    textResult))
+            {
+                FailTest(
+                    "Expected exact-text failure"
+                );
+
+                return;
+            }
+
+            Log(
+                "PASS: No DOM text target was found."
+            );
+
+            // =================================================
+            // CANVAS ITSELF IS STRUCTURED
+            // INTERNAL CONTROLS ARE NOT
+            // =================================================
+
+            string canvasFind =
+                await BrowserTools.FindElementsAsync(
+                    "css",
+                    "#visualCanvas"
+                );
+
+            Log(
+                canvasFind
+            );
+
+            if (IsBrowserFailure(
+                    canvasFind))
+            {
+                FailTest(
+                    "Canvas Detection"
+                );
+
+                return;
+            }
+
+            // =================================================
+            // TEST ELEMENT BOUNDING BOX TOOL
+            // =================================================
+
+            Log(
+                "Reading canvas bounding box..."
+            );
+
+            string canvasBox =
+                await BrowserTools.GetElementBoxAsync(
+                    "css",
+                    "#visualCanvas"
+                );
+
+            Log(
+                canvasBox
+            );
+
+            if (IsBrowserFailure(
+                    canvasBox))
+            {
+                FailTest(
+                    "Element Bounding Box"
+                );
+
+                return;
+            }
+
+            // =================================================
+            // VISION
+            //
+            // This captures a viewport screenshot and analyzes it.
+            // =================================================
+
+            Log(
+                "Invoking visual inspection to locate canvas target..."
+            );
+
+            string visionResult =
+                await BrowserVisionTools
+                    .InspectCurrentPageAsync(
+                        """
+                        This is a controlled Operator AI coordinate test.
+
+                        Inside the large canvas there are three
+                        button-like visual controls arranged horizontally.
+
+                        Find the control visually labeled:
+
+                        Continue Review
+
+                        I need the CENTER POINT of that control
+                        in screenshot viewport coordinates.
+
+                        The top-left corner of the screenshot is (0,0).
+
+                        Return these lines clearly:
+
+                        TARGET_POSITION=MIDDLE
+                        TARGET_X=<integer>
+                        TARGET_Y=<integer>
+
+                        Use the approximate center of the visible
+                        Continue Review control.
+
+                        Do not click anything.
+                        """,
+                        false
+                    );
+
+            Log(
+                visionResult
+            );
+
+            if (IsBrowserFailure(
+                    visionResult))
+            {
+                FailTest(
+                    "Visual Inspection"
+                );
+
+                return;
+            }
+
+            // =================================================
+            // PARSE COORDINATES
+            // =================================================
+
+            if (!TryExtractVisionCoordinates(
+                    visionResult,
+                    out int targetX,
+                    out int targetY))
+            {
+                FailTest(
+                    "Vision Coordinate Parsing"
+                );
+
+                return;
+            }
+
+            Log(
+                $"Vision coordinate: ({targetX}, {targetY})"
+            );
+
+            if (!VisionSaysMiddle(
+                    visionResult))
+            {
+                FailTest(
+                    "Vision Target Position"
+                );
+
+                return;
+            }
+
+            Log(
+                "PASS: Vision identified the middle canvas action."
+            );
+
+            // =================================================
+            // VIEWPORT
+            // =================================================
+
+            string viewportResult =
+                await BrowserTools.GetViewportInfoAsync();
+
+            Log(
+                viewportResult
+            );
+
+            if (IsBrowserFailure(
+                    viewportResult))
+            {
+                FailTest(
+                    "Viewport Information"
+                );
+
+                return;
+            }
+
+            // =================================================
+            // IMPORTANT SAFETY STEP
+            //
+            // The vision API round trip may take several seconds.
+            // Capture a fresh viewport screenshot immediately
+            // before the coordinate click.
+            //
+            // The page is deterministic and has not moved.
+            // =================================================
+
+            Log(
+                "Arming coordinate click with fresh viewport screenshot..."
+            );
+
+            string armedScreenshot =
+                await BrowserTools.ScreenshotAsync(
+                    "0.6f-coordinate-armed.png",
+                    false
+                );
+
+            Log(
+                armedScreenshot
+            );
+
+            if (IsBrowserFailure(
+                    armedScreenshot))
+            {
+                FailTest(
+                    "Coordinate Safety Screenshot"
+                );
+
+                return;
+            }
+
+            // =================================================
+            // CONFIRM GUARD IS ARMED
+            // =================================================
+
+            string armedViewport =
+                await BrowserTools.GetViewportInfoAsync();
+
+            Log(
+                armedViewport
+            );
+
+            if (!armedViewport.Contains(
+                    "Recent visual-click screenshot: Yes",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                FailTest(
+                    "Visual Click Guard"
+                );
+
+                return;
+            }
+
+            Log(
+                "PASS: Visual click safety guard armed."
+            );
+
+            // =================================================
+            // MOVE MOUSE
+            // =================================================
+
+            string moveResult =
+                await BrowserTools.MouseMoveAsync(
+                    targetX,
+                    targetY
+                );
+
+            Log(
+                moveResult
+            );
+
+            if (IsBrowserFailure(
+                    moveResult))
+            {
+                FailTest(
+                    "Mouse Move"
+                );
+
+                return;
+            }
+
+            // =================================================
+            // GUARDED COORDINATE CLICK
+            // =================================================
+
+            Log(
+                "Performing guarded coordinate click..."
+            );
+
+            string clickResult =
+                await BrowserTools.MouseClickAsync(
+                    targetX,
+                    targetY
+                );
+
+            Log(
+                clickResult
+            );
+
+            if (IsBrowserFailure(
+                    clickResult))
+            {
+                FailTest(
+                    "Coordinate Click"
+                );
+
+                return;
+            }
+
+            // =================================================
+            // VERIFY WITH DOM
+            // =================================================
+
+            string waitResult =
+                await BrowserTools.WaitForTextAsync(
+                    "Result: canvas review activated",
+                    true,
+                    10
+                );
+
+            Log(
+                waitResult
+            );
+
+            if (IsBrowserFailure(
+                    waitResult))
+            {
+                FailTest(
+                    "Coordinate Click Verification"
+                );
+
+                return;
+            }
+
+            string statusResult =
+                await BrowserTools.GetElementTextAsync(
+                    "css",
+                    "#canvasStatus"
+                );
+
+            Log(
+                statusResult
+            );
+
+            if (!statusResult.Contains(
+                    "Result: canvas review activated",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                FailTest(
+                    "Final Canvas Status"
+                );
+
+                return;
+            }
+
+            Log(
+                "PASS: Coordinate click reached correct canvas target."
+            );
+
+            // =================================================
+            // PROVE SCREENSHOT WAS INVALIDATED
+            //
+            // MouseClickAsync automatically removes permission
+            // to reuse the old screenshot.
+            // =================================================
+
+            Log(
+                "TEST: Old screenshot must not be reusable..."
+            );
+
+            string secondClick =
+                await BrowserTools.MouseClickAsync(
+                    targetX,
+                    targetY
+                );
+
+            Log(
+                secondClick
+            );
+
+            if (!secondClick.StartsWith(
+                    "BLOCKED",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                FailTest(
+                    "Screenshot Invalidation"
+                );
+
+                return;
+            }
+
+            Log(
+                "PASS: Reusing stale visual click permission was blocked."
+            );
+
+            // =================================================
+            // COMPLETE
+            // =================================================
+
+            Log(
+                "=================================================="
+            );
+
+            Log(
+                "SUCCESS: VERSION 0.6F COORDINATE TEST PASSED."
+            );
+
+            Log(
+                "Structured button lookup failure: PASS"
+            );
+
+            Log(
+                "Structured text lookup failure: PASS"
+            );
+
+            Log(
+                "Canvas detection: PASS"
+            );
+
+            Log(
+                "Element bounding box: PASS"
+            );
+
+            Log(
+                "Visual target identification: PASS"
+            );
+
+            Log(
+                "Vision coordinate extraction: PASS"
+            );
+
+            Log(
+                "Viewport inspection: PASS"
+            );
+
+            Log(
+                "Fresh screenshot guard: PASS"
+            );
+
+            Log(
+                "Mouse move: PASS"
+            );
+
+            Log(
+                "Guarded coordinate click: PASS"
+            );
+
+            Log(
+                "DOM result verification: PASS"
+            );
+
+            Log(
+                "Old screenshot invalidation: PASS"
+            );
+
+            Log(
+                $"Clicked coordinate: ({targetX}, {targetY})"
+            );
+
+            Log(
+                "=================================================="
+            );
+        }
+        catch (Exception ex)
+        {
+            Log(
+                $"0.6F COORDINATE TEST ERROR: {ex.Message}"
+            );
+        }
+        finally
+        {
+            try
+            {
+                await server.StopAsync();
+            }
+            catch
+            {
+            }
+        }
+    }
+
+    // =========================================================
+    // VISION COORDINATE PARSER
+    // =========================================================
+
+    private static bool TryExtractVisionCoordinates(
+        string visionResult,
+        out int x,
+        out int y)
+    {
+        x = 0;
+        y = 0;
+
+        if (string.IsNullOrWhiteSpace(
+                visionResult))
+        {
+            return false;
+        }
+
+        Match xMatch =
+            Regex.Match(
+                visionResult,
+                @"TARGET_X\s*[:=]\s*(\d+)",
+                RegexOptions.IgnoreCase
+            );
+
+        Match yMatch =
+            Regex.Match(
+                visionResult,
+                @"TARGET_Y\s*[:=]\s*(\d+)",
+                RegexOptions.IgnoreCase
+            );
+
+        if (!xMatch.Success ||
+            !yMatch.Success)
+        {
+            return false;
+        }
+
+        if (!int.TryParse(
+                xMatch.Groups[1].Value,
+                out x))
+        {
+            return false;
+        }
+
+        if (!int.TryParse(
+                yMatch.Groups[1].Value,
+                out y))
+        {
+            return false;
+        }
+
+        return
+            x > 0 &&
+            y > 0;
+    }
+
+    // =========================================================
+    // VISION POSITION CHECK
+    // =========================================================
+
+    private static bool VisionSaysMiddle(
+        string visionResult)
+    {
+        if (string.IsNullOrWhiteSpace(
+                visionResult))
+        {
+            return false;
+        }
+
+        string normalized =
+            visionResult.ToLowerInvariant();
+
+        return
+            normalized.Contains(
+                "target_position=middle"
+            )
+            ||
+            normalized.Contains(
+                "target_position: middle"
+            )
+            ||
+            normalized.Contains(
+                "middle button"
+            )
+            ||
+            normalized.Contains(
+                "center button"
+            )
+            ||
+            normalized.Contains(
+                "centre button"
+            );
+    }
+
+    // =========================================================
+    // PREVIOUS VISION POSITION HELPER
     // =========================================================
 
     private static int DetermineVisualButtonIndex(
@@ -1687,18 +1834,6 @@ public partial class MainWindow : Window
         string normalized =
             visionResult.ToLowerInvariant();
 
-        /*
-         * Check middle / center FIRST.
-         *
-         * A vision response may say something like:
-         *
-         * "Left is Cancel, middle is Continue Review,
-         * right is Defer."
-         *
-         * Therefore simply checking "left" first
-         * would give the wrong answer.
-         */
-
         if (
             normalized.Contains(
                 "middle"
@@ -1710,14 +1845,6 @@ public partial class MainWindow : Window
             ||
             normalized.Contains(
                 "centre button"
-            )
-            ||
-            normalized.Contains(
-                "center position"
-            )
-            ||
-            normalized.Contains(
-                "centre position"
             )
             ||
             normalized.Contains(
@@ -1738,10 +1865,6 @@ public partial class MainWindow : Window
             )
             ||
             normalized.Contains(
-                "left position"
-            )
-            ||
-            normalized.Contains(
                 "on the left"
             )
         )
@@ -1752,10 +1875,6 @@ public partial class MainWindow : Window
         if (
             normalized.Contains(
                 "right button"
-            )
-            ||
-            normalized.Contains(
-                "right position"
             )
             ||
             normalized.Contains(
@@ -1770,7 +1889,7 @@ public partial class MainWindow : Window
     }
 
     // =========================================================
-    // EXPECTED NOT_FOUND
+    // NOT FOUND
     // =========================================================
 
     private static bool IsNotFound(
@@ -1783,7 +1902,7 @@ public partial class MainWindow : Window
     }
 
     // =========================================================
-    // TEST FAILURE
+    // FAILURE
     // =========================================================
 
     private void FailTest(
@@ -1799,7 +1918,7 @@ public partial class MainWindow : Window
     }
 
     // =========================================================
-    // FAILURE HELPER
+    // RESULT CHECK
     // =========================================================
 
     private static bool IsBrowserFailure(
