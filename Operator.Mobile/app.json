@@ -11,7 +11,14 @@
       "bundleIdentifier": "ai.operator.mobile"
     },
     "android": {
-      "package": "ai.operator.mobile"
+      "package": "ai.operator.mobile",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ]
     },
     "plugins": [
       [
@@ -29,7 +36,14 @@
         }
       ],
       "expo-notifications",
-      "expo-secure-store"
-    ]
+      "expo-secure-store",
+      "expo-asset"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "d3ab725f-7ecc-4105-88f5-77ffc302d04c"
+      }
+    },
+    "owner": "aamir05s-team"
   }
 }
