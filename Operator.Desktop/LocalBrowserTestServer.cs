@@ -24,7 +24,7 @@ public sealed class LocalBrowserTestServer :
     } = "";
 
     // =========================================================
-    // START SERVER
+    // START
     // =========================================================
 
     public async Task<string> StartAsync()
@@ -34,7 +34,7 @@ public sealed class LocalBrowserTestServer :
             if (_listener != null)
             {
                 return
-                    $"SUCCESS: Browser controls test server is already running at {BaseUrl}";
+                    $"SUCCESS: Browser test server is already running at {BaseUrl}";
             }
 
             _cancellation =
@@ -60,18 +60,17 @@ public sealed class LocalBrowserTestServer :
                     _cancellation.Token
                 );
 
-            // Give the listener a moment to settle.
             await Task.Delay(
                 100
             );
 
             return
-                $"SUCCESS: Browser controls test server started at {BaseUrl}";
+                $"SUCCESS: Browser test server started at {BaseUrl}";
         }
         catch (Exception ex)
         {
             return
-                $"ERROR: Could not start browser controls test server: {ex.Message}";
+                $"ERROR: Could not start browser test server: {ex.Message}";
         }
     }
 
@@ -138,10 +137,17 @@ public sealed class LocalBrowserTestServer :
                     break;
                 }
 
-                await Task.Delay(
-                    50,
-                    cancellationToken
-                );
+                try
+                {
+                    await Task.Delay(
+                        50,
+                        cancellationToken
+                    );
+                }
+                catch
+                {
+                    break;
+                }
             }
         }
     }
@@ -188,7 +194,19 @@ public sealed class LocalBrowserTestServer :
                     ? parts[1]
                     : "/";
 
-            if (path.StartsWith(
+            int queryIndex =
+                path.IndexOf('?');
+
+            if (queryIndex >= 0)
+            {
+                path =
+                    path.Substring(
+                        0,
+                        queryIndex
+                    );
+            }
+
+            if (path.Equals(
                     "/download",
                     StringComparison.OrdinalIgnoreCase))
             {
@@ -200,7 +218,19 @@ public sealed class LocalBrowserTestServer :
                 return;
             }
 
-            if (path.StartsWith(
+            if (path.Equals(
+                    "/next",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                await SendNextPageAsync(
+                    stream,
+                    cancellationToken
+                );
+
+                return;
+            }
+
+            if (path.Equals(
                     "/favicon.ico",
                     StringComparison.OrdinalIgnoreCase))
             {
@@ -212,7 +242,7 @@ public sealed class LocalBrowserTestServer :
                 return;
             }
 
-            await SendTestPageAsync(
+            await SendMainPageAsync(
                 stream,
                 cancellationToken
             );
@@ -275,27 +305,34 @@ public sealed class LocalBrowserTestServer :
     }
 
     // =========================================================
-    // TEST PAGE
+    // MAIN TEST PAGE
     // =========================================================
 
-    private static async Task SendTestPageAsync(
+    private static async Task SendMainPageAsync(
         NetworkStream stream,
         CancellationToken cancellationToken)
     {
         string html =
             """
             <!DOCTYPE html>
+
             <html lang="en">
+
             <head>
+
                 <meta charset="utf-8">
-                <title>Operator AI Browser Controls Test</title>
+
+                <title>
+                    Operator AI Browser Reliability Test
+                </title>
 
                 <style>
+
                     body {
                         font-family: Segoe UI, Arial, sans-serif;
-                        max-width: 760px;
-                        margin: 50px auto;
-                        padding: 0 30px;
+                        max-width: 850px;
+                        margin: 45px auto;
+                        padding: 0 30px 100px 30px;
                         line-height: 1.5;
                     }
 
@@ -305,7 +342,7 @@ public sealed class LocalBrowserTestServer :
 
                     .subtitle {
                         color: #555;
-                        margin-bottom: 32px;
+                        margin-bottom: 30px;
                     }
 
                     .card {
@@ -324,21 +361,36 @@ public sealed class LocalBrowserTestServer :
                     input,
                     select,
                     button,
-                    a.download-button {
+                    a {
                         font-size: 16px;
                     }
 
-                    select,
-                    input[type=file] {
-                        margin-bottom: 12px;
+                    input[type=text] {
+                        width: 420px;
+                        padding: 8px;
+                    }
+
+                    button {
+                        padding: 9px 16px;
                     }
 
                     .status {
-                        margin-top: 10px;
+                        margin-top: 12px;
                         font-family: Consolas, monospace;
                     }
 
-                    a.download-button {
+                    .exact-target {
+                        border: 1px dashed #777;
+                        padding: 10px;
+                        margin-top: 10px;
+                    }
+
+                    .hidden {
+                        display: none;
+                    }
+
+                    .download-button,
+                    .next-button {
                         display: inline-block;
                         padding: 10px 18px;
                         border: 1px solid #777;
@@ -346,25 +398,121 @@ public sealed class LocalBrowserTestServer :
                         color: black;
                         text-decoration: none;
                         background: #eee;
+                        margin-right: 10px;
                     }
+
+                    .spacer {
+                        height: 1200px;
+                        border-left: 3px dotted #ddd;
+                        margin-left: 15px;
+                    }
+
+                    #bottomTarget {
+                        border: 2px solid #555;
+                        padding: 20px;
+                        font-weight: 600;
+                        margin-bottom: 40px;
+                    }
+
                 </style>
+
             </head>
 
             <body>
 
-                <h1>Operator AI Browser Controls Test</h1>
+                <h1>
+                    Operator AI Browser Reliability Test
+                </h1>
 
                 <div class="subtitle">
-                    Local Version 0.6D automation test page
+                    Local Version 0.6E deterministic test page
                 </div>
+
+                <!-- ========================================= -->
+                <!-- ROLE / VALUE TEST                         -->
+                <!-- ========================================= -->
+
+                <div class="card">
+
+                    <label for="testInput">
+                        Test input
+                    </label>
+
+                    <input
+                        id="testInput"
+                        type="text"
+                        placeholder="Enter test value">
+
+                    <div
+                        id="inputStatus"
+                        class="status">
+                        Input: empty
+                    </div>
+
+                </div>
+
+                <!-- ========================================= -->
+                <!-- EXACT TEXT / TEXT / ATTRIBUTE TEST        -->
+                <!-- ========================================= -->
+
+                <div class="card">
+
+                    <div>
+                        Exact text test:
+                    </div>
+
+                    <div
+                        id="exactTarget"
+                        class="exact-target"
+                        data-test-value="operator-ai-06e">
+                        Exact Target 0.6E
+                    </div>
+
+                    <br>
+
+                    <a
+                        id="attributeLink"
+                        href="/next"
+                        data-purpose="navigation-test">
+                        Attribute Test Link
+                    </a>
+
+                </div>
+
+                <!-- ========================================= -->
+                <!-- DYNAMIC VISIBILITY / WAIT TEST            -->
+                <!-- ========================================= -->
+
+                <div class="card">
+
+                    <button
+                        id="revealButton"
+                        type="button">
+                        Reveal async message
+                    </button>
+
+                    <div
+                        id="asyncMessage"
+                        class="status hidden">
+                        Async message ready
+                    </div>
+
+                </div>
+
+                <!-- ========================================= -->
+                <!-- 0.6D CONTROLS                             -->
+                <!-- ========================================= -->
 
                 <div class="card">
 
                     <label for="enableAutomation">
+
                         <input
                             id="enableAutomation"
                             type="checkbox">
+
                         Enable automation
+
                     </label>
 
                     <div
@@ -382,6 +530,7 @@ public sealed class LocalBrowserTestServer :
                     </label>
 
                     <select id="department">
+
                         <option value="finance">
                             Finance
                         </option>
@@ -397,6 +546,7 @@ public sealed class LocalBrowserTestServer :
                         <option value="engineering">
                             Engineering
                         </option>
+
                     </select>
 
                     <div
@@ -427,12 +577,6 @@ public sealed class LocalBrowserTestServer :
 
                 <div class="card">
 
-                    <div>
-                        Test report download
-                    </div>
-
-                    <br>
-
                     <a
                         id="downloadReport"
                         class="download-button"
@@ -442,7 +586,79 @@ public sealed class LocalBrowserTestServer :
 
                 </div>
 
+                <!-- ========================================= -->
+                <!-- SCROLL TEST                               -->
+                <!-- ========================================= -->
+
+                <h2>
+                    Scroll Test
+                </h2>
+
+                <div class="spacer">
+                </div>
+
+                <div
+                    id="bottomTarget">
+                    Bottom Target Reached
+                </div>
+
+                <!-- ========================================= -->
+                <!-- URL NAVIGATION TEST                       -->
+                <!-- ========================================= -->
+
+                <a
+                    id="nextLink"
+                    class="next-button"
+                    href="/next">
+                    Go to next page
+                </a>
+
                 <script>
+
+                    const testInput =
+                        document.getElementById(
+                            "testInput"
+                        );
+
+                    const inputStatus =
+                        document.getElementById(
+                            "inputStatus"
+                        );
+
+                    testInput.addEventListener(
+                        "input",
+                        () => {
+                            inputStatus.textContent =
+                                "Input: " +
+                                testInput.value;
+                        }
+                    );
+
+                    const revealButton =
+                        document.getElementById(
+                            "revealButton"
+                        );
+
+                    const asyncMessage =
+                        document.getElementById(
+                            "asyncMessage"
+                        );
+
+                    revealButton.addEventListener(
+                        "click",
+                        () => {
+
+                            setTimeout(
+                                () => {
+                                    asyncMessage.classList.remove(
+                                        "hidden"
+                                    );
+                                },
+                                600
+                            );
+
+                        }
+                    );
 
                     const checkbox =
                         document.getElementById(
@@ -477,6 +693,7 @@ public sealed class LocalBrowserTestServer :
                     department.addEventListener(
                         "change",
                         () => {
+
                             const option =
                                 department.options[
                                     department.selectedIndex
@@ -485,6 +702,7 @@ public sealed class LocalBrowserTestServer :
                             departmentStatus.textContent =
                                 "Department: " +
                                 option.text;
+
                         }
                     );
 
@@ -501,6 +719,7 @@ public sealed class LocalBrowserTestServer :
                     upload.addEventListener(
                         "change",
                         () => {
+
                             if (
                                 upload.files &&
                                 upload.files.length > 0
@@ -513,12 +732,14 @@ public sealed class LocalBrowserTestServer :
                                 uploadStatus.textContent =
                                     "Uploaded: none";
                             }
+
                         }
                     );
 
                 </script>
 
             </body>
+
             </html>
             """;
 
@@ -535,7 +756,83 @@ public sealed class LocalBrowserTestServer :
     }
 
     // =========================================================
-    // DOWNLOAD RESPONSE
+    // NEXT PAGE
+    // =========================================================
+
+    private static async Task SendNextPageAsync(
+        NetworkStream stream,
+        CancellationToken cancellationToken)
+    {
+        string html =
+            """
+            <!DOCTYPE html>
+
+            <html lang="en">
+
+            <head>
+
+                <meta charset="utf-8">
+
+                <title>
+                    Operator AI Navigation Complete
+                </title>
+
+                <style>
+
+                    body {
+                        font-family: Segoe UI, Arial, sans-serif;
+                        max-width: 760px;
+                        margin: 80px auto;
+                        padding: 30px;
+                    }
+
+                    .complete {
+                        border: 2px solid #555;
+                        padding: 25px;
+                        border-radius: 8px;
+                    }
+
+                </style>
+
+            </head>
+
+            <body>
+
+                <div class="complete">
+
+                    <h1>
+                        Navigation Complete
+                    </h1>
+
+                    <p id="navigationResult">
+                        Operator AI successfully reached the next page.
+                    </p>
+
+                    <a href="/">
+                        Return to test page
+                    </a>
+
+                </div>
+
+            </body>
+
+            </html>
+            """;
+
+        await SendResponseAsync(
+            stream,
+            "200 OK",
+            "text/html; charset=utf-8",
+            Encoding.UTF8.GetBytes(
+                html
+            ),
+            null,
+            cancellationToken
+        );
+    }
+
+    // =========================================================
+    // DOWNLOAD
     // =========================================================
 
     private static async Task SendDownloadAsync(
@@ -546,7 +843,8 @@ public sealed class LocalBrowserTestServer :
             """
             Operator AI Browser Controls Test Report
 
-            Version: 0.6D
+            Version: 0.6E
+
             Result: Browser download system is working.
 
             This file was downloaded automatically
@@ -569,7 +867,7 @@ public sealed class LocalBrowserTestServer :
     }
 
     // =========================================================
-    // EMPTY RESPONSE
+    // EMPTY
     // =========================================================
 
     private static async Task SendEmptyResponseAsync(
@@ -657,7 +955,7 @@ public sealed class LocalBrowserTestServer :
     }
 
     // =========================================================
-    // STOP SERVER
+    // STOP
     // =========================================================
 
     public async Task StopAsync()
