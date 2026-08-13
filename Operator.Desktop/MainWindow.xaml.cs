@@ -206,7 +206,7 @@ public partial class MainWindow : Window
     }
 
     // =========================================================
-    // WINDOWS UI TYPE TEST
+    // WINDOWS UI TEST
     // =========================================================
 
     private async void UiTypeTest_Click(
@@ -368,10 +368,6 @@ public partial class MainWindow : Window
                 }
             }
 
-            // -------------------------------------------------
-            // Open Notepad
-            // -------------------------------------------------
-
             string openResult =
                 WindowsTools.OpenApplication(
                     "notepad"
@@ -380,10 +376,6 @@ public partial class MainWindow : Window
             Log(openResult);
 
             await Task.Delay(1500);
-
-            // -------------------------------------------------
-            // Focus Notepad
-            // -------------------------------------------------
 
             string focusResult =
                 WindowsUiTools.FocusWindow(
@@ -394,10 +386,6 @@ public partial class MainWindow : Window
 
             await Task.Delay(300);
 
-            // -------------------------------------------------
-            // Type content
-            // -------------------------------------------------
-
             string typeResult =
                 WindowsUiTools.TypeText(
                     "Notepad",
@@ -407,10 +395,6 @@ public partial class MainWindow : Window
             Log(typeResult);
 
             await Task.Delay(600);
-
-            // -------------------------------------------------
-            // Open Save As
-            // -------------------------------------------------
 
             Log(
                 "Opening Save As with CTRL+SHIFT+S..."
@@ -425,10 +409,6 @@ public partial class MainWindow : Window
 
             await Task.Delay(2000);
 
-            // -------------------------------------------------
-            // Select current filename
-            // -------------------------------------------------
-
             Log(
                 "Selecting existing filename..."
             );
@@ -442,19 +422,11 @@ public partial class MainWindow : Window
 
             await Task.Delay(300);
 
-            // -------------------------------------------------
-            // Copy target path
-            // -------------------------------------------------
-
             System.Windows.Clipboard.SetText(
                 targetPath
             );
 
             await Task.Delay(200);
-
-            // -------------------------------------------------
-            // Paste target path
-            // -------------------------------------------------
 
             Log(
                 "Entering target file path..."
@@ -469,10 +441,6 @@ public partial class MainWindow : Window
 
             await Task.Delay(500);
 
-            // -------------------------------------------------
-            // Save
-            // -------------------------------------------------
-
             Log(
                 "Pressing ENTER to save..."
             );
@@ -485,10 +453,6 @@ public partial class MainWindow : Window
             Log(enterResult);
 
             await Task.Delay(2000);
-
-            // -------------------------------------------------
-            // Verify
-            // -------------------------------------------------
 
             Log(
                 "Verifying saved file..."
@@ -536,7 +500,7 @@ public partial class MainWindow : Window
 
     // =========================================================
     // VERSION 0.6A
-    // BROWSER TEST
+    // BASIC BROWSER TEST
     // =========================================================
 
     private async void BrowserTest_Click(
@@ -547,6 +511,71 @@ public partial class MainWindow : Window
         {
             Log("--------------------------------");
             Log("Starting browser test...");
+
+            string startResult =
+                await BrowserTools.StartBrowserAsync();
+
+            Log(startResult);
+
+            if (IsBrowserFailure(startResult))
+            {
+                return;
+            }
+
+            string navigateResult =
+                await BrowserTools.NavigateAsync(
+                    "https://example.com"
+                );
+
+            Log(navigateResult);
+
+            if (IsBrowserFailure(navigateResult))
+            {
+                return;
+            }
+
+            string pageInfo =
+                await BrowserTools.GetPageInfoAsync();
+
+            Log(pageInfo);
+
+            string pageText =
+                await BrowserTools.ReadPageTextAsync();
+
+            Log(pageText);
+
+            string links =
+                await BrowserTools.ListLinksAsync();
+
+            Log(links);
+
+            Log(
+                "SUCCESS: Browser test completed."
+            );
+        }
+        catch (Exception ex)
+        {
+            Log(
+                $"BROWSER TEST ERROR: {ex.Message}"
+            );
+        }
+    }
+
+    // =========================================================
+    // VERSION 0.6B
+    // INTERACTIVE BROWSER TEST
+    // =========================================================
+
+    private async void BrowserInteractionTest_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        try
+        {
+            Log("--------------------------------");
+            Log(
+                "Starting Version 0.6B browser interaction test..."
+            );
 
             // -------------------------------------------------
             // STEP 1
@@ -560,12 +589,10 @@ public partial class MainWindow : Window
 
             Log(startResult);
 
-            if (startResult.StartsWith(
-                    "ERROR",
-                    StringComparison.OrdinalIgnoreCase))
+            if (IsBrowserFailure(startResult))
             {
                 Log(
-                    "Browser test stopped because Chromium could not start."
+                    "0.6B test stopped: browser could not start."
                 );
 
                 return;
@@ -573,87 +600,332 @@ public partial class MainWindow : Window
 
             // -------------------------------------------------
             // STEP 2
-            // Navigate to example.com
+            // Navigate to Wikipedia
             // -------------------------------------------------
 
             Log(
-                "Navigating to https://example.com..."
+                "Navigating to Wikipedia..."
             );
 
             string navigateResult =
                 await BrowserTools.NavigateAsync(
-                    "https://example.com"
+                    "https://www.wikipedia.org"
                 );
 
             Log(navigateResult);
 
-            if (navigateResult.StartsWith(
-                    "ERROR",
-                    StringComparison.OrdinalIgnoreCase))
+            if (IsBrowserFailure(navigateResult))
             {
                 Log(
-                    "Browser test stopped because navigation failed."
+                    "0.6B test stopped: navigation failed."
+                );
+
+                return;
+            }
+
+            await Task.Delay(1000);
+
+            // -------------------------------------------------
+            // STEP 3
+            // Read page
+            // -------------------------------------------------
+
+            Log(
+                "Reading Wikipedia page information..."
+            );
+
+            string initialPageInfo =
+                await BrowserTools.GetPageInfoAsync();
+
+            Log(initialPageInfo);
+
+            // -------------------------------------------------
+            // STEP 4
+            // Inspect interactive elements
+            // -------------------------------------------------
+
+            Log(
+                "Inspecting interactive browser elements..."
+            );
+
+            string interactiveElements =
+                await BrowserTools
+                    .ListInteractiveElementsAsync();
+
+            Log(interactiveElements);
+
+            // -------------------------------------------------
+            // STEP 5
+            // Find Wikipedia search field
+            // -------------------------------------------------
+
+            Log(
+                "Finding Wikipedia search field..."
+            );
+
+            string findResult =
+                await BrowserTools.FindElementsAsync(
+                    "css",
+                    "input[name='search']"
+                );
+
+            Log(findResult);
+
+            string locatorType =
+                "css";
+
+            string locatorQuery =
+                "input[name='search']";
+
+            // -------------------------------------------------
+            // Fallback locator
+            // -------------------------------------------------
+
+            if (IsBrowserFailure(findResult))
+            {
+                Log(
+                    "Primary search locator failed. Trying placeholder locator..."
+                );
+
+                locatorType =
+                    "placeholder";
+
+                locatorQuery =
+                    "Search Wikipedia";
+
+                findResult =
+                    await BrowserTools.FindElementsAsync(
+                        locatorType,
+                        locatorQuery
+                    );
+
+                Log(findResult);
+            }
+
+            if (IsBrowserFailure(findResult))
+            {
+                Log(
+                    "ERROR: Wikipedia search field could not be located."
                 );
 
                 return;
             }
 
             // -------------------------------------------------
-            // STEP 3
-            // Read page title and URL
+            // STEP 6
+            // Fill search field
             // -------------------------------------------------
 
             Log(
-                "Reading page information..."
+                "Filling search field with 'OpenAI'..."
             );
 
-            string pageInfo =
+            string fillResult =
+                await BrowserTools.FillAsync(
+                    locatorType,
+                    locatorQuery,
+                    "OpenAI"
+                );
+
+            Log(fillResult);
+
+            if (IsBrowserFailure(fillResult))
+            {
+                return;
+            }
+
+            await Task.Delay(500);
+
+            // -------------------------------------------------
+            // STEP 7
+            // Press Enter
+            // -------------------------------------------------
+
+            Log(
+                "Pressing ENTER in search field..."
+            );
+
+            string pressResult =
+                await BrowserTools.PressAsync(
+                    locatorType,
+                    locatorQuery,
+                    "Enter"
+                );
+
+            Log(pressResult);
+
+            if (IsBrowserFailure(pressResult))
+            {
+                return;
+            }
+
+            await Task.Delay(2500);
+
+            // -------------------------------------------------
+            // STEP 8
+            // Read results page information
+            // -------------------------------------------------
+
+            Log(
+                "Reading page after search..."
+            );
+
+            string resultPageInfo =
                 await BrowserTools.GetPageInfoAsync();
 
-            Log(pageInfo);
+            Log(resultPageInfo);
 
             // -------------------------------------------------
-            // STEP 4
-            // Read visible page text
+            // STEP 9
+            // Read visible results text
             // -------------------------------------------------
 
-            Log(
-                "Reading visible page text..."
-            );
-
-            string pageText =
+            string resultText =
                 await BrowserTools.ReadPageTextAsync();
 
-            Log(pageText);
+            Log(resultText);
 
             // -------------------------------------------------
-            // STEP 5
-            // List links
+            // STEP 10
+            // Test Back
             // -------------------------------------------------
 
             Log(
-                "Listing page links..."
+                "Testing browser Back..."
             );
 
-            string links =
-                await BrowserTools.ListLinksAsync();
+            string backResult =
+                await BrowserTools.BackAsync();
 
-            Log(links);
+            Log(backResult);
+
+            await Task.Delay(1500);
+
+            // -------------------------------------------------
+            // STEP 11
+            // Test Forward
+            // -------------------------------------------------
+
+            Log(
+                "Testing browser Forward..."
+            );
+
+            string forwardResult =
+                await BrowserTools.ForwardAsync();
+
+            Log(forwardResult);
+
+            await Task.Delay(1500);
+
+            // -------------------------------------------------
+            // STEP 12
+            // Open second tab
+            // -------------------------------------------------
+
+            Log(
+                "Opening a second browser tab..."
+            );
+
+            string newTabResult =
+                await BrowserTools.NewTabAsync(
+                    "https://example.com"
+                );
+
+            Log(newTabResult);
+
+            await Task.Delay(1200);
+
+            // -------------------------------------------------
+            // STEP 13
+            // List tabs
+            // -------------------------------------------------
+
+            Log(
+                "Listing browser tabs..."
+            );
+
+            string tabs =
+                await BrowserTools.ListTabsAsync();
+
+            Log(tabs);
+
+            // -------------------------------------------------
+            // STEP 14
+            // Switch back to first tab
+            // -------------------------------------------------
+
+            Log(
+                "Switching to browser tab 1..."
+            );
+
+            string switchResult =
+                await BrowserTools.SwitchTabAsync(
+                    1
+                );
+
+            Log(switchResult);
+
+            await Task.Delay(700);
+
+            // -------------------------------------------------
+            // STEP 15
+            // List tabs again
+            // -------------------------------------------------
+
+            string tabsAfterSwitch =
+                await BrowserTools.ListTabsAsync();
+
+            Log(tabsAfterSwitch);
+
+            // -------------------------------------------------
+            // STEP 16
+            // Test reload
+            // -------------------------------------------------
+
+            Log(
+                "Testing browser Reload..."
+            );
+
+            string reloadResult =
+                await BrowserTools.ReloadAsync();
+
+            Log(reloadResult);
 
             // -------------------------------------------------
             // COMPLETE
             // -------------------------------------------------
 
             Log(
-                "SUCCESS: Browser test completed."
+                "SUCCESS: Version 0.6B browser interaction test completed."
             );
         }
         catch (Exception ex)
         {
             Log(
-                $"BROWSER TEST ERROR: {ex.Message}"
+                $"BROWSER INTERACTION TEST ERROR: {ex.Message}"
             );
         }
+    }
+
+    // =========================================================
+    // HELPER
+    // =========================================================
+
+    private static bool IsBrowserFailure(
+        string result)
+    {
+        return
+            result.StartsWith(
+                "ERROR",
+                StringComparison.OrdinalIgnoreCase)
+            ||
+            result.StartsWith(
+                "NOT_FOUND",
+                StringComparison.OrdinalIgnoreCase)
+            ||
+            result.StartsWith(
+                "BLOCKED",
+                StringComparison.OrdinalIgnoreCase);
     }
 
     // =========================================================

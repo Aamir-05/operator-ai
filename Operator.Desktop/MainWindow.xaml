@@ -2,10 +2,10 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Operator AI"
-        Height="800"
-        Width="1150"
-        MinHeight="650"
-        MinWidth="900"
+        Height="820"
+        Width="1200"
+        MinHeight="680"
+        MinWidth="950"
         WindowStartupLocation="CenterScreen">
 
     <Grid Margin="30">
@@ -31,7 +31,7 @@
                 FontWeight="Bold"/>
 
             <TextBlock
-                Text="Windows Agent - Version 0.6A"
+                Text="Windows Agent - Version 0.6B"
                 FontSize="15"
                 Margin="0,5,0,25"/>
 
@@ -136,6 +136,13 @@
                 Height="45"
                 Margin="0,0,10,10"
                 Click="BrowserTest_Click"/>
+
+            <Button
+                Content="Browser Interaction Test"
+                Width="190"
+                Height="45"
+                Margin="0,0,10,10"
+                Click="BrowserInteractionTest_Click"/>
 
         </WrapPanel>
 
