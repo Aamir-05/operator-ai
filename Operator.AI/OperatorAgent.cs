@@ -149,7 +149,7 @@ public sealed class OperatorAgent
         );
 
     // =========================================================
-    // WINDOWS UI
+    // EXISTING WINDOWS UI
     // =========================================================
 
     private static readonly FunctionTool ListWindowsTool =
@@ -279,6 +279,479 @@ public sealed class OperatorAgent
         );
 
     // =========================================================
+    // VERSION 0.7A
+    // NATIVE WINDOWS UI AUTOMATION
+    // =========================================================
+
+    private static readonly FunctionTool WindowsListControlsTool =
+        ResponseTool.CreateFunctionTool(
+            functionName: "windows_list_controls",
+            functionDescription:
+                "List native Windows UI Automation controls inside a window. Use this before guessing control names. window_title may be an application title or __FOREGROUND__ for the active window.",
+            functionParameters: BinaryData.FromString(
+                """
+                {
+                  "type": "object",
+                  "properties": {
+                    "window_title": {
+                      "type": "string"
+                    },
+                    "maximum_controls": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "window_title",
+                    "maximum_controls"
+                  ],
+                  "additionalProperties": false
+                }
+                """
+            ),
+            strictModeEnabled: true
+        );
+
+    private static readonly FunctionTool WindowsFindControlTool =
+        ResponseTool.CreateFunctionTool(
+            functionName: "windows_find_control",
+            functionDescription:
+                "Find a native Windows control by control type and accessible name or AutomationId.",
+            functionParameters: BinaryData.FromString(
+                """
+                {
+                  "type": "object",
+                  "properties": {
+                    "window_title": {
+                      "type": "string"
+                    },
+                    "control_type": {
+                      "type": "string"
+                    },
+                    "control_name": {
+                      "type": "string"
+                    },
+                    "exact_name": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "window_title",
+                    "control_type",
+                    "control_name",
+                    "exact_name"
+                  ],
+                  "additionalProperties": false
+                }
+                """
+            ),
+            strictModeEnabled: true
+        );
+
+    private static readonly FunctionTool WindowsGetControlInfoTool =
+        ResponseTool.CreateFunctionTool(
+            functionName: "windows_get_control_info",
+            functionDescription:
+                "Inspect a native Windows control and report its identity, bounds, enabled/focusable state, and supported UI Automation patterns.",
+            functionParameters: BinaryData.FromString(
+                """
+                {
+                  "type": "object",
+                  "properties": {
+                    "window_title": {
+                      "type": "string"
+                    },
+                    "control_type": {
+                      "type": "string"
+                    },
+                    "control_name": {
+                      "type": "string"
+                    },
+                    "exact_name": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "window_title",
+                    "control_type",
+                    "control_name",
+                    "exact_name"
+                  ],
+                  "additionalProperties": false
+                }
+                """
+            ),
+            strictModeEnabled: true
+        );
+
+    private static readonly FunctionTool WindowsSetControlValueTool =
+        ResponseTool.CreateFunctionTool(
+            functionName: "windows_set_control_value",
+            functionDescription:
+                "Set the value of a native Windows editable control through UI Automation ValuePattern.",
+            functionParameters: BinaryData.FromString(
+                """
+                {
+                  "type": "object",
+                  "properties": {
+                    "window_title": {
+                      "type": "string"
+                    },
+                    "control_type": {
+                      "type": "string"
+                    },
+                    "control_name": {
+                      "type": "string"
+                    },
+                    "exact_name": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "window_title",
+                    "control_type",
+                    "control_name",
+                    "exact_name",
+                    "value"
+                  ],
+                  "additionalProperties": false
+                }
+                """
+            ),
+            strictModeEnabled: true
+        );
+
+    private static readonly FunctionTool WindowsGetControlValueTool =
+        ResponseTool.CreateFunctionTool(
+            functionName: "windows_get_control_value",
+            functionDescription:
+                "Read the current value or text from a native Windows control through UI Automation.",
+            functionParameters: BinaryData.FromString(
+                """
+                {
+                  "type": "object",
+                  "properties": {
+                    "window_title": {
+                      "type": "string"
+                    },
+                    "control_type": {
+                      "type": "string"
+                    },
+                    "control_name": {
+                      "type": "string"
+                    },
+                    "exact_name": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "window_title",
+                    "control_type",
+                    "control_name",
+                    "exact_name"
+                  ],
+                  "additionalProperties": false
+                }
+                """
+            ),
+            strictModeEnabled: true
+        );
+
+    private static readonly FunctionTool WindowsClickControlTool =
+        ResponseTool.CreateFunctionTool(
+            functionName: "windows_click_control",
+            functionDescription:
+                "Activate a native Windows control using its supported UI Automation pattern, preferring Invoke, SelectionItem, Toggle, or ExpandCollapse instead of mouse coordinates.",
+            functionParameters: BinaryData.FromString(
+                """
+                {
+                  "type": "object",
+                  "properties": {
+                    "window_title": {
+                      "type": "string"
+                    },
+                    "control_type": {
+                      "type": "string"
+                    },
+                    "control_name": {
+                      "type": "string"
+                    },
+                    "exact_name": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "window_title",
+                    "control_type",
+                    "control_name",
+                    "exact_name"
+                  ],
+                  "additionalProperties": false
+                }
+                """
+            ),
+            strictModeEnabled: true
+        );
+
+    private static readonly FunctionTool WindowsSetToggleTool =
+        ResponseTool.CreateFunctionTool(
+            functionName: "windows_set_toggle",
+            functionDescription:
+                "Set a native Windows checkbox or toggle control to a requested on/off state using TogglePattern.",
+            functionParameters: BinaryData.FromString(
+                """
+                {
+                  "type": "object",
+                  "properties": {
+                    "window_title": {
+                      "type": "string"
+                    },
+                    "control_type": {
+                      "type": "string"
+                    },
+                    "control_name": {
+                      "type": "string"
+                    },
+                    "exact_name": {
+                      "type": "boolean"
+                    },
+                    "checked": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "window_title",
+                    "control_type",
+                    "control_name",
+                    "exact_name",
+                    "checked"
+                  ],
+                  "additionalProperties": false
+                }
+                """
+            ),
+            strictModeEnabled: true
+        );
+
+    private static readonly FunctionTool WindowsGetToggleTool =
+        ResponseTool.CreateFunctionTool(
+            functionName: "windows_get_toggle",
+            functionDescription:
+                "Read the current TogglePattern state of a native Windows checkbox or toggle control.",
+            functionParameters: BinaryData.FromString(
+                """
+                {
+                  "type": "object",
+                  "properties": {
+                    "window_title": {
+                      "type": "string"
+                    },
+                    "control_type": {
+                      "type": "string"
+                    },
+                    "control_name": {
+                      "type": "string"
+                    },
+                    "exact_name": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "window_title",
+                    "control_type",
+                    "control_name",
+                    "exact_name"
+                  ],
+                  "additionalProperties": false
+                }
+                """
+            ),
+            strictModeEnabled: true
+        );
+
+    private static readonly FunctionTool WindowsSelectControlTool =
+        ResponseTool.CreateFunctionTool(
+            functionName: "windows_select_control",
+            functionDescription:
+                "Select a native Windows tab item, list item, or other selectable control through SelectionItemPattern.",
+            functionParameters: BinaryData.FromString(
+                """
+                {
+                  "type": "object",
+                  "properties": {
+                    "window_title": {
+                      "type": "string"
+                    },
+                    "control_type": {
+                      "type": "string"
+                    },
+                    "control_name": {
+                      "type": "string"
+                    },
+                    "exact_name": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "window_title",
+                    "control_type",
+                    "control_name",
+                    "exact_name"
+                  ],
+                  "additionalProperties": false
+                }
+                """
+            ),
+            strictModeEnabled: true
+        );
+
+    private static readonly FunctionTool WindowsSetExpandedTool =
+        ResponseTool.CreateFunctionTool(
+            functionName: "windows_set_expanded",
+            functionDescription:
+                "Expand or collapse a native Windows ComboBox, menu, tree item, or other ExpandCollapsePattern control.",
+            functionParameters: BinaryData.FromString(
+                """
+                {
+                  "type": "object",
+                  "properties": {
+                    "window_title": {
+                      "type": "string"
+                    },
+                    "control_type": {
+                      "type": "string"
+                    },
+                    "control_name": {
+                      "type": "string"
+                    },
+                    "exact_name": {
+                      "type": "boolean"
+                    },
+                    "expanded": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "window_title",
+                    "control_type",
+                    "control_name",
+                    "exact_name",
+                    "expanded"
+                  ],
+                  "additionalProperties": false
+                }
+                """
+            ),
+            strictModeEnabled: true
+        );
+
+    private static readonly FunctionTool WindowsFocusControlTool =
+        ResponseTool.CreateFunctionTool(
+            functionName: "windows_focus_control",
+            functionDescription:
+                "Move keyboard focus to a native Windows control identified by type and accessible name.",
+            functionParameters: BinaryData.FromString(
+                """
+                {
+                  "type": "object",
+                  "properties": {
+                    "window_title": {
+                      "type": "string"
+                    },
+                    "control_type": {
+                      "type": "string"
+                    },
+                    "control_name": {
+                      "type": "string"
+                    },
+                    "exact_name": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "window_title",
+                    "control_type",
+                    "control_name",
+                    "exact_name"
+                  ],
+                  "additionalProperties": false
+                }
+                """
+            ),
+            strictModeEnabled: true
+        );
+
+    private static readonly FunctionTool WindowsWaitForWindowTool =
+        ResponseTool.CreateFunctionTool(
+            functionName: "windows_wait_for_window",
+            functionDescription:
+                "Wait for a native Windows application window or dialog to become available.",
+            functionParameters: BinaryData.FromString(
+                """
+                {
+                  "type": "object",
+                  "properties": {
+                    "window_title": {
+                      "type": "string"
+                    },
+                    "timeout_seconds": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "window_title",
+                    "timeout_seconds"
+                  ],
+                  "additionalProperties": false
+                }
+                """
+            ),
+            strictModeEnabled: true
+        );
+
+    private static readonly FunctionTool WindowsWaitForControlTool =
+        ResponseTool.CreateFunctionTool(
+            functionName: "windows_wait_for_control",
+            functionDescription:
+                "Wait for a native Windows control to become available inside a window or dialog.",
+            functionParameters: BinaryData.FromString(
+                """
+                {
+                  "type": "object",
+                  "properties": {
+                    "window_title": {
+                      "type": "string"
+                    },
+                    "control_type": {
+                      "type": "string"
+                    },
+                    "control_name": {
+                      "type": "string"
+                    },
+                    "exact_name": {
+                      "type": "boolean"
+                    },
+                    "timeout_seconds": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "window_title",
+                    "control_type",
+                    "control_name",
+                    "exact_name",
+                    "timeout_seconds"
+                  ],
+                  "additionalProperties": false
+                }
+                """
+            ),
+            strictModeEnabled: true
+        );
+
+    // =========================================================
     // BROWSER CORE
     // =========================================================
 
@@ -359,7 +832,7 @@ public sealed class OperatorAgent
         );
 
     // =========================================================
-    // GENERIC LOCATORS
+    // GENERIC BROWSER LOCATORS
     // =========================================================
 
     private static readonly FunctionTool BrowserFindTool =
@@ -391,7 +864,7 @@ public sealed class OperatorAgent
         );
 
     // =========================================================
-    // ROLE TARGETING
+    // BROWSER ROLE TARGETING
     // =========================================================
 
     private static readonly FunctionTool BrowserRoleFindTool =
@@ -589,7 +1062,7 @@ public sealed class OperatorAgent
         );
 
     // =========================================================
-    // VISUAL INSPECTION
+    // BROWSER VISION
     // =========================================================
 
     private static readonly FunctionTool BrowserVisualInspectTool =
@@ -621,7 +1094,7 @@ public sealed class OperatorAgent
         );
 
     // =========================================================
-    // SCREENSHOTS
+    // BROWSER SCREENSHOTS
     // =========================================================
 
     private static readonly FunctionTool BrowserScreenshotTool =
@@ -662,8 +1135,7 @@ public sealed class OperatorAgent
         );
 
     // =========================================================
-    // VERSION 0.6F-4
-    // SAFE COORDINATE CONTROL
+    // SAFE BROWSER COORDINATE CONTROL
     // =========================================================
 
     private static readonly FunctionTool BrowserGetViewportTool =
@@ -679,7 +1151,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_element_box",
             functionDescription:
-                "Read the viewport bounding box and center coordinate of a structured browser element. Useful for comparing DOM element positions with visual observations.",
+                "Read the viewport bounding box and center coordinate of a structured browser element.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -735,7 +1207,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_mouse_click",
             functionDescription:
-                "Perform a guarded visual coordinate click inside the current browser viewport. This requires a recent non-full-page screenshot with unchanged URL, viewport, and scroll position. Use only as a fallback when structured targeting cannot identify the required control.",
+                "Perform a guarded visual coordinate click inside the browser viewport. Use only when structured targeting cannot identify the target.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -763,7 +1235,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_mouse_double_click",
             functionDescription:
-                "Perform a guarded visual coordinate double-click inside the current browser viewport. Requires a recent non-full-page screenshot and unchanged page state.",
+                "Perform a guarded visual coordinate double-click inside the current browser viewport.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -788,7 +1260,7 @@ public sealed class OperatorAgent
         );
 
     // =========================================================
-    // ELEMENT INSPECTION
+    // BROWSER ELEMENT INSPECTION
     // =========================================================
 
     private static readonly FunctionTool BrowserGetTextTool =
@@ -908,7 +1380,7 @@ public sealed class OperatorAgent
         );
 
     // =========================================================
-    // WAITING
+    // BROWSER WAITING
     // =========================================================
 
     private static readonly FunctionTool BrowserWaitTool =
@@ -1008,7 +1480,7 @@ public sealed class OperatorAgent
         );
 
     // =========================================================
-    // CLICK / FILL / TYPE / KEY
+    // BROWSER CLICK / FILL / TYPE
     // =========================================================
 
     private static readonly FunctionTool BrowserClickTool =
@@ -1158,14 +1630,14 @@ public sealed class OperatorAgent
         );
 
     // =========================================================
-    // SCROLL
+    // BROWSER SCROLL
     // =========================================================
 
     private static readonly FunctionTool BrowserScrollTool =
         ResponseTool.CreateFunctionTool(
             functionName: "browser_scroll",
             functionDescription:
-                "Scroll the current browser page vertically. Positive scrolls down and negative scrolls up.",
+                "Scroll the current browser page vertically.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -1212,7 +1684,7 @@ public sealed class OperatorAgent
         );
 
     // =========================================================
-    // CHECKBOX / RADIO
+    // BROWSER CHECKBOX
     // =========================================================
 
     private static readonly FunctionTool BrowserSetCheckedTool =
@@ -1276,7 +1748,7 @@ public sealed class OperatorAgent
         );
 
     // =========================================================
-    // DROPDOWN
+    // BROWSER DROPDOWN
     // =========================================================
 
     private static readonly FunctionTool BrowserSelectOptionTool =
@@ -1316,7 +1788,7 @@ public sealed class OperatorAgent
         );
 
     // =========================================================
-    // UPLOAD / DOWNLOAD
+    // BROWSER UPLOAD / DOWNLOAD
     // =========================================================
 
     private static readonly FunctionTool BrowserUploadTool =
@@ -1393,7 +1865,7 @@ public sealed class OperatorAgent
         );
 
     // =========================================================
-    // NAVIGATION / TABS
+    // BROWSER NAVIGATION / TABS
     // =========================================================
 
     private static readonly FunctionTool BrowserBackTool =
@@ -1598,24 +2070,183 @@ public sealed class OperatorAgent
                             - Use tools for real actions.
                             - Never claim success without tool confirmation.
                             - Verify important outcomes.
-                            - Never invent page contents, files, URLs, controls, or state.
+                            - Never invent files, URLs, windows, controls,
+                              page contents, or computer state.
                             - Prefer deterministic structured automation.
-                            - Do not repeatedly use the exact same failing call.
+                            - Do not repeatedly issue the exact same failing call.
+                            - If a control name is uncertain, inspect first.
 
                             =================================================
-                            WINDOWS
+                            WINDOWS TARGETING PRIORITY
+                            =================================================
+
+                            For native Windows applications prefer:
+
+                            1. windows_list_controls
+                            2. windows_find_control
+                            3. windows_get_control_info
+                            4. direct UI Automation pattern operations
+                            5. keyboard automation only when structured
+                               UI Automation is insufficient
+
+                            Prefer native UI Automation over keyboard
+                            navigation and over coordinate guessing.
+
+                            =================================================
+                            WINDOWS WINDOW DISCOVERY
+                            =================================================
+
+                            Use list_windows to discover top-level windows.
+
+                            Use windows_wait_for_window after opening an
+                            application or when a dialog is expected.
+
+                            Use an explicit window title whenever known.
+
+                            "__FOREGROUND__" may be used when interacting
+                            with the currently active dialog or window and
+                            its identity has already been established.
+
+                            Do not assume the foreground window is correct
+                            without first inspecting or verifying it.
+
+                            =================================================
+                            WINDOWS CONTROL DISCOVERY
+                            =================================================
+
+                            Use windows_list_controls before guessing native
+                            control names.
+
+                            Native control types include common values such as:
+
+                            button
+                            edit
+                            checkbox
+                            combobox
+                            list
+                            listitem
+                            menu
+                            menuitem
+                            radiobutton
+                            tab
+                            tabitem
+                            tree
+                            treeitem
+                            text
+
+                            Prefer exact control names when available.
+
+                            Set exact_name=false only when exact targeting is
+                            not possible and the partial name is unambiguous.
+
+                            =================================================
+                            WINDOWS TEXTBOXES
+                            =================================================
+
+                            Prefer windows_set_control_value for an editable
+                            native control that supports ValuePattern.
+
+                            After changing important text, verify using:
+
+                            windows_get_control_value
+
+                            Do not use type_text merely because a textbox is
+                            visible if structured ValuePattern works.
+
+                            =================================================
+                            WINDOWS BUTTONS
+                            =================================================
+
+                            Before activating an unfamiliar button, use:
+
+                            windows_get_control_info
+
+                            windows_click_control uses the supported native
+                            UI Automation pattern instead of screen coordinates.
+
+                            After clicking an important control, verify the
+                            resulting state, window, text, or dialog.
+
+                            =================================================
+                            WINDOWS CHECKBOXES / TOGGLES
                             =================================================
 
                             Use:
-                            - open_application
-                            - list_windows
-                            - inspect_window
-                            - focus_window
-                            - type_text
-                            - press_key
-                            - save_active_document_as_desktop_file
 
-                            when working with normal Windows applications.
+                            windows_set_toggle
+                            windows_get_toggle
+
+                            Do not blindly click a checkbox when its requested
+                            state can be set and verified deterministically.
+
+                            =================================================
+                            WINDOWS TABS / LIST ITEMS
+                            =================================================
+
+                            Use windows_select_control for controls that expose
+                            SelectionItemPattern, such as tab items and many
+                            list items.
+
+                            Verify the resulting interface state afterward.
+
+                            =================================================
+                            WINDOWS COMBOBOX / EXPANDABLE CONTROLS
+                            =================================================
+
+                            Use windows_set_expanded to expand or collapse
+                            controls supporting ExpandCollapsePattern.
+
+                            Inspect newly exposed controls after expanding.
+
+                            =================================================
+                            WINDOWS WAITING
+                            =================================================
+
+                            Use:
+
+                            windows_wait_for_window
+                            windows_wait_for_control
+
+                            rather than repeatedly retrying immediately.
+
+                            =================================================
+                            WINDOWS FALLBACK
+                            =================================================
+
+                            Existing tools remain available:
+
+                            open_application
+                            list_windows
+                            inspect_window
+                            focus_window
+                            type_text
+                            press_key
+                            save_active_document_as_desktop_file
+
+                            Use keyboard-based tools only when native control
+                            automation is unavailable or insufficient.
+
+                            =================================================
+                            HIGH-CONSEQUENCE WINDOWS ACTIONS
+                            =================================================
+
+                            Do not finalize high-consequence actions such as:
+
+                            - purchases
+                            - payments
+                            - money transfers
+                            - permanent account deletion
+                            - password/security changes
+                            - irreversible administrative changes
+                            - destructive data deletion
+                            - final legal submissions
+
+                            unless the user's instruction clearly authorizes
+                            that exact final action.
+
+                            For consequential controls, inspect the exact
+                            control and verify the surrounding state before
+                            activating it.
 
                             =================================================
                             BROWSER TARGETING PRIORITY
@@ -1630,10 +2261,10 @@ public sealed class OperatorAgent
                             5. testid
                             6. title / alt
                             7. stable CSS
-                            8. visual coordinate interaction only as a fallback
+                            8. visual coordinate interaction only as fallback
 
                             =================================================
-                            VISUAL INSPECTION
+                            BROWSER VISUAL INSPECTION
                             =================================================
 
                             browser_visual_inspect observes a screenshot.
@@ -1641,184 +2272,52 @@ public sealed class OperatorAgent
                             It does not click.
 
                             Use it when structured DOM/role information is
-                            insufficient to understand the page.
+                            insufficient.
 
-                            Prefer full_page=false when the visual result may
+                            Prefer full_page=false when visual information may
                             later be used for coordinate interaction.
 
                             =================================================
-                            VISUAL COORDINATE INTERACTION
+                            BROWSER COORDINATE INTERACTION
                             =================================================
 
-                            The following tools are available:
-
-                            browser_get_viewport
-                            browser_element_box
-                            browser_mouse_move
-                            browser_mouse_click
-                            browser_mouse_double_click
-
-                            Coordinate clicks are FALLBACK ONLY.
+                            Coordinate clicking is fallback-only.
 
                             Before browser_mouse_click or
                             browser_mouse_double_click:
 
-                            1. Try structured targeting first.
-                            2. Establish that structured targeting is insufficient.
-                            3. Use browser_visual_inspect with full_page=false,
-                               or capture browser_screenshot with full_page=false.
-                            4. Determine a target coordinate from the fresh viewport image.
-                            5. Use browser_get_viewport if useful to verify dimensions
-                               and confirm a recent screenshot exists.
-                            6. Click only if the target is clearly identified.
-                            7. Immediately verify the result using structured tools,
-                               page text, URL, or another fresh visual inspection.
+                            1. Try structured targeting.
+                            2. Establish structured targeting is insufficient.
+                            3. Capture or inspect a fresh viewport screenshot.
+                            4. Determine the target coordinate.
+                            5. Verify the viewport if useful.
+                            6. Click only when the target is clear.
+                            7. Verify the resulting state.
 
-                            IMPORTANT:
-
-                            - Coordinates are viewport coordinates.
-                            - Never derive click coordinates from a full-page screenshot.
-                            - Never scroll after the screenshot and then click from
-                              the old screenshot.
-                            - Never navigate after the screenshot and then click
-                              from the old screenshot.
-                            - If the click tool returns BLOCKED, take a fresh
-                              viewport screenshot and reassess the target.
-                            - Do not randomly probe coordinates.
-                            - Do not repeatedly click around looking for a target.
-                            - Prefer clicking near the center of a clearly identified
-                              visual target.
-
-                            =================================================
-                            HIGH-CONSEQUENCE VISUAL CLICKS
-                            =================================================
-
-                            Do not use coordinate clicking to finalize:
-
-                            - purchases
-                            - payments
-                            - money transfers
-                            - account deletion
-                            - password/security changes
-                            - final legal submissions
-                            - destructive data deletion
-                            - irreversible administrative changes
-
-                            unless the user has clearly authorized that exact
-                            final action and the target has been independently
-                            verified.
-
-                            Even when authorized, prefer a structured locator
-                            over coordinate clicking whenever possible.
-
-                            =================================================
-                            ELEMENT BOX
-                            =================================================
-
-                            browser_element_box provides the bounding box of a
-                            structured DOM element.
-
-                            Use it for:
-                            - checking where a known DOM element appears,
-                            - comparing structured and visual positions,
-                            - debugging coordinate alignment.
-
-                            Do not use it as a reason to choose coordinate clicking
-                            when a structured click already works.
-
-                            =================================================
-                            SCREENSHOT SAFETY
-                            =================================================
-
-                            Safe coordinate clicks require a recent viewport screenshot.
-
-                            The BrowserTools safety layer automatically blocks a click if:
-
-                            - there is no recent viewport screenshot,
-                            - the screenshot is stale,
-                            - the URL changed,
-                            - viewport dimensions changed,
-                            - scroll position changed,
-                            - coordinates are outside the viewport.
-
-                            If blocked:
-                            take a fresh viewport screenshot and reassess.
-
-                            =================================================
-                            PAGE INSPECTION
-                            =================================================
-
-                            Use:
-                            - browser_get_page_info
-                            - browser_read_page
-                            - browser_list_elements
-                            - browser_get_text
-                            - browser_get_attribute
-                            - browser_get_value
-                            - browser_is_visible
-
-                            for structured verification.
-
-                            =================================================
-                            WAITING
-                            =================================================
-
-                            Use explicit waits:
-
-                            - browser_wait
-                            - browser_role_wait
-                            - browser_wait_for_url
-                            - browser_wait_for_text
-
-                            instead of blind delays.
-
-                            =================================================
-                            FORMS
-                            =================================================
-
-                            Prefer:
-                            - browser_role_fill
-                            - browser_fill
-                            - browser_get_value
-                            - browser_set_checked
-                            - browser_get_checked
-                            - browser_select_option
-
-                            Coordinate interaction should not replace normal
-                            form automation when structured controls exist.
-
-                            =================================================
-                            NAVIGATION
-                            =================================================
-
-                            Use:
-                            - browser_navigate
-                            - browser_back
-                            - browser_forward
-                            - browser_reload
-                            - browser_new_tab
-                            - browser_list_tabs
-                            - browser_switch_tab
-
-                            as needed.
+                            Never:
+                            - derive coordinates from a full-page screenshot,
+                            - scroll after capture then click from stale data,
+                            - navigate after capture then use stale coordinates,
+                            - probe random coordinates.
 
                             =================================================
                             COMPLETION
                             =================================================
 
-                            Do not declare completion until the requested result
-                            has been reasonably verified.
+                            Do not declare completion until the requested
+                            result has been reasonably verified.
 
-                            After a visual coordinate click, verification is mandatory.
-
-                            Clearly distinguish:
-                            - visually inferred information
-                            from
-                            - structured DOM facts.
+                            Distinguish:
+                            - actions actually performed,
+                            - state verified through tools,
+                            - visual inference,
+                            - assumptions.
                             """
                     };
 
-                // WINDOWS
+                // =================================================
+                // WINDOWS BASIC
+                // =================================================
 
                 options.Tools.Add(OpenApplicationTool);
                 options.Tools.Add(CreateFolderTool);
@@ -1834,7 +2333,27 @@ public sealed class OperatorAgent
                 options.Tools.Add(PressKeyTool);
                 options.Tools.Add(SaveActiveDocumentTool);
 
+                // =================================================
+                // WINDOWS 0.7A NATIVE UI AUTOMATION
+                // =================================================
+
+                options.Tools.Add(WindowsListControlsTool);
+                options.Tools.Add(WindowsFindControlTool);
+                options.Tools.Add(WindowsGetControlInfoTool);
+                options.Tools.Add(WindowsSetControlValueTool);
+                options.Tools.Add(WindowsGetControlValueTool);
+                options.Tools.Add(WindowsClickControlTool);
+                options.Tools.Add(WindowsSetToggleTool);
+                options.Tools.Add(WindowsGetToggleTool);
+                options.Tools.Add(WindowsSelectControlTool);
+                options.Tools.Add(WindowsSetExpandedTool);
+                options.Tools.Add(WindowsFocusControlTool);
+                options.Tools.Add(WindowsWaitForWindowTool);
+                options.Tools.Add(WindowsWaitForControlTool);
+
+                // =================================================
                 // BROWSER CORE
+                // =================================================
 
                 options.Tools.Add(StartBrowserTool);
                 options.Tools.Add(BrowserSessionInfoTool);
@@ -1845,7 +2364,9 @@ public sealed class OperatorAgent
                 options.Tools.Add(BrowserListElementsTool);
                 options.Tools.Add(BrowserFindTool);
 
-                // SEMANTIC TARGETING
+                // =================================================
+                // BROWSER SEMANTIC
+                // =================================================
 
                 options.Tools.Add(BrowserRoleFindTool);
                 options.Tools.Add(BrowserRoleClickTool);
@@ -1854,16 +2375,22 @@ public sealed class OperatorAgent
                 options.Tools.Add(BrowserRoleGetTextTool);
                 options.Tools.Add(BrowserExactTextTool);
 
-                // VISION
+                // =================================================
+                // BROWSER VISION
+                // =================================================
 
                 options.Tools.Add(BrowserVisualInspectTool);
 
-                // SCREENSHOTS
+                // =================================================
+                // BROWSER SCREENSHOTS
+                // =================================================
 
                 options.Tools.Add(BrowserScreenshotTool);
                 options.Tools.Add(BrowserListScreenshotsTool);
 
-                // 0.6F-4 COORDINATES
+                // =================================================
+                // BROWSER COORDINATES
+                // =================================================
 
                 options.Tools.Add(BrowserGetViewportTool);
                 options.Tools.Add(BrowserElementBoxTool);
@@ -1871,20 +2398,26 @@ public sealed class OperatorAgent
                 options.Tools.Add(BrowserMouseClickTool);
                 options.Tools.Add(BrowserMouseDoubleClickTool);
 
-                // INSPECTION
+                // =================================================
+                // BROWSER INSPECTION
+                // =================================================
 
                 options.Tools.Add(BrowserGetTextTool);
                 options.Tools.Add(BrowserGetAttributeTool);
                 options.Tools.Add(BrowserGetValueTool);
                 options.Tools.Add(BrowserIsVisibleTool);
 
-                // WAIT
+                // =================================================
+                // BROWSER WAIT
+                // =================================================
 
                 options.Tools.Add(BrowserWaitTool);
                 options.Tools.Add(BrowserWaitForUrlTool);
                 options.Tools.Add(BrowserWaitForTextTool);
 
-                // INPUT
+                // =================================================
+                // BROWSER INPUT
+                // =================================================
 
                 options.Tools.Add(BrowserClickTool);
                 options.Tools.Add(BrowserFillTool);
@@ -1892,24 +2425,32 @@ public sealed class OperatorAgent
                 options.Tools.Add(BrowserPressTool);
                 options.Tools.Add(BrowserPageKeyTool);
 
-                // SCROLL
+                // =================================================
+                // BROWSER SCROLL
+                // =================================================
 
                 options.Tools.Add(BrowserScrollTool);
                 options.Tools.Add(BrowserScrollToTool);
 
-                // FORM
+                // =================================================
+                // BROWSER FORMS
+                // =================================================
 
                 options.Tools.Add(BrowserSetCheckedTool);
                 options.Tools.Add(BrowserGetCheckedTool);
                 options.Tools.Add(BrowserSelectOptionTool);
 
-                // FILE
+                // =================================================
+                // BROWSER FILES
+                // =================================================
 
                 options.Tools.Add(BrowserUploadTool);
                 options.Tools.Add(BrowserDownloadTool);
                 options.Tools.Add(BrowserListDownloadsTool);
 
-                // NAVIGATION
+                // =================================================
+                // BROWSER NAVIGATION
+                // =================================================
 
                 options.Tools.Add(BrowserBackTool);
                 options.Tools.Add(BrowserForwardTool);
@@ -1920,7 +2461,9 @@ public sealed class OperatorAgent
                 options.Tools.Add(BrowserCloseTabTool);
                 options.Tools.Add(StopBrowserTool);
 
+                // =================================================
                 // MODEL
+                // =================================================
 
                 ResponseResult response =
                     await _client.CreateResponseAsync(
@@ -2097,32 +2640,52 @@ public sealed class OperatorAgent
 
         switch (call.FunctionName)
         {
-            // WINDOWS
+            // =================================================
+            // WINDOWS BASIC
+            // =================================================
 
             case "open_application":
                 return WindowsTools.OpenApplication(
-                    GetStringArgument(arguments, "application")
+                    GetStringArgument(
+                        arguments,
+                        "application"
+                    )
                 );
 
             case "create_desktop_folder":
                 return WindowsTools.CreateDesktopFolder(
-                    GetStringArgument(arguments, "folder_name")
+                    GetStringArgument(
+                        arguments,
+                        "folder_name"
+                    )
                 );
 
             case "create_desktop_file":
                 return WindowsTools.CreateDesktopFile(
-                    GetStringArgument(arguments, "relative_path"),
-                    GetStringArgument(arguments, "content")
+                    GetStringArgument(
+                        arguments,
+                        "relative_path"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "content"
+                    )
                 );
 
             case "read_desktop_file":
                 return WindowsTools.ReadDesktopFile(
-                    GetStringArgument(arguments, "relative_path")
+                    GetStringArgument(
+                        arguments,
+                        "relative_path"
+                    )
                 );
 
             case "desktop_file_exists":
                 return WindowsTools.DesktopFileExists(
-                    GetStringArgument(arguments, "relative_path")
+                    GetStringArgument(
+                        arguments,
+                        "relative_path"
+                    )
                 );
 
             case "list_desktop":
@@ -2133,23 +2696,38 @@ public sealed class OperatorAgent
 
             case "inspect_window":
                 return WindowsUiTools.InspectWindow(
-                    GetStringArgument(arguments, "window_title")
+                    GetStringArgument(
+                        arguments,
+                        "window_title"
+                    )
                 );
 
             case "focus_window":
                 return WindowsUiTools.FocusWindow(
-                    GetStringArgument(arguments, "window_title")
+                    GetStringArgument(
+                        arguments,
+                        "window_title"
+                    )
                 );
 
             case "type_text":
                 return WindowsUiTools.TypeText(
-                    GetStringArgument(arguments, "window_title"),
-                    GetStringArgument(arguments, "text")
+                    GetStringArgument(
+                        arguments,
+                        "window_title"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "text"
+                    )
                 );
 
             case "press_key":
                 return WindowsInputTools.PressKey(
-                    GetStringArgument(arguments, "keys")
+                    GetStringArgument(
+                        arguments,
+                        "keys"
+                    )
                 );
 
             case "save_active_document_as_desktop_file":
@@ -2161,7 +2739,328 @@ public sealed class OperatorAgent
                         )
                     );
 
+            // =================================================
+            // WINDOWS 0.7A NATIVE CONTROL TOOLS
+            //
+            // UI Automation calls run on a worker thread so the
+            // WPF interface remains responsive.
+            // =================================================
+
+            case "windows_list_controls":
+                return await Task.Run(
+                    () =>
+                        WindowsControlTools.ListControls(
+                            GetStringArgument(
+                                arguments,
+                                "window_title"
+                            ),
+                            GetIntArgument(
+                                arguments,
+                                "maximum_controls"
+                            )
+                        ),
+                    cancellationToken
+                );
+
+            case "windows_find_control":
+                return await Task.Run(
+                    () =>
+                        WindowsControlTools.FindControl(
+                            GetStringArgument(
+                                arguments,
+                                "window_title"
+                            ),
+                            GetStringArgument(
+                                arguments,
+                                "control_type"
+                            ),
+                            GetStringArgument(
+                                arguments,
+                                "control_name"
+                            ),
+                            GetBoolArgument(
+                                arguments,
+                                "exact_name"
+                            )
+                        ),
+                    cancellationToken
+                );
+
+            case "windows_get_control_info":
+                return await Task.Run(
+                    () =>
+                        WindowsControlTools.GetControlInfo(
+                            GetStringArgument(
+                                arguments,
+                                "window_title"
+                            ),
+                            GetStringArgument(
+                                arguments,
+                                "control_type"
+                            ),
+                            GetStringArgument(
+                                arguments,
+                                "control_name"
+                            ),
+                            GetBoolArgument(
+                                arguments,
+                                "exact_name"
+                            )
+                        ),
+                    cancellationToken
+                );
+
+            case "windows_set_control_value":
+                return await Task.Run(
+                    () =>
+                        WindowsControlTools.SetControlValue(
+                            GetStringArgument(
+                                arguments,
+                                "window_title"
+                            ),
+                            GetStringArgument(
+                                arguments,
+                                "control_type"
+                            ),
+                            GetStringArgument(
+                                arguments,
+                                "control_name"
+                            ),
+                            GetBoolArgument(
+                                arguments,
+                                "exact_name"
+                            ),
+                            GetStringArgument(
+                                arguments,
+                                "value"
+                            )
+                        ),
+                    cancellationToken
+                );
+
+            case "windows_get_control_value":
+                return await Task.Run(
+                    () =>
+                        WindowsControlTools.GetControlValue(
+                            GetStringArgument(
+                                arguments,
+                                "window_title"
+                            ),
+                            GetStringArgument(
+                                arguments,
+                                "control_type"
+                            ),
+                            GetStringArgument(
+                                arguments,
+                                "control_name"
+                            ),
+                            GetBoolArgument(
+                                arguments,
+                                "exact_name"
+                            )
+                        ),
+                    cancellationToken
+                );
+
+            case "windows_click_control":
+                return await Task.Run(
+                    () =>
+                        WindowsControlTools.ClickControl(
+                            GetStringArgument(
+                                arguments,
+                                "window_title"
+                            ),
+                            GetStringArgument(
+                                arguments,
+                                "control_type"
+                            ),
+                            GetStringArgument(
+                                arguments,
+                                "control_name"
+                            ),
+                            GetBoolArgument(
+                                arguments,
+                                "exact_name"
+                            )
+                        ),
+                    cancellationToken
+                );
+
+            case "windows_set_toggle":
+                return await Task.Run(
+                    () =>
+                        WindowsControlTools.SetToggleState(
+                            GetStringArgument(
+                                arguments,
+                                "window_title"
+                            ),
+                            GetStringArgument(
+                                arguments,
+                                "control_type"
+                            ),
+                            GetStringArgument(
+                                arguments,
+                                "control_name"
+                            ),
+                            GetBoolArgument(
+                                arguments,
+                                "exact_name"
+                            ),
+                            GetBoolArgument(
+                                arguments,
+                                "checked"
+                            )
+                        ),
+                    cancellationToken
+                );
+
+            case "windows_get_toggle":
+                return await Task.Run(
+                    () =>
+                        WindowsControlTools.GetToggleState(
+                            GetStringArgument(
+                                arguments,
+                                "window_title"
+                            ),
+                            GetStringArgument(
+                                arguments,
+                                "control_type"
+                            ),
+                            GetStringArgument(
+                                arguments,
+                                "control_name"
+                            ),
+                            GetBoolArgument(
+                                arguments,
+                                "exact_name"
+                            )
+                        ),
+                    cancellationToken
+                );
+
+            case "windows_select_control":
+                return await Task.Run(
+                    () =>
+                        WindowsControlTools.SelectControl(
+                            GetStringArgument(
+                                arguments,
+                                "window_title"
+                            ),
+                            GetStringArgument(
+                                arguments,
+                                "control_type"
+                            ),
+                            GetStringArgument(
+                                arguments,
+                                "control_name"
+                            ),
+                            GetBoolArgument(
+                                arguments,
+                                "exact_name"
+                            )
+                        ),
+                    cancellationToken
+                );
+
+            case "windows_set_expanded":
+                return await Task.Run(
+                    () =>
+                        WindowsControlTools.SetExpandedState(
+                            GetStringArgument(
+                                arguments,
+                                "window_title"
+                            ),
+                            GetStringArgument(
+                                arguments,
+                                "control_type"
+                            ),
+                            GetStringArgument(
+                                arguments,
+                                "control_name"
+                            ),
+                            GetBoolArgument(
+                                arguments,
+                                "exact_name"
+                            ),
+                            GetBoolArgument(
+                                arguments,
+                                "expanded"
+                            )
+                        ),
+                    cancellationToken
+                );
+
+            case "windows_focus_control":
+                return await Task.Run(
+                    () =>
+                        WindowsControlTools.FocusControl(
+                            GetStringArgument(
+                                arguments,
+                                "window_title"
+                            ),
+                            GetStringArgument(
+                                arguments,
+                                "control_type"
+                            ),
+                            GetStringArgument(
+                                arguments,
+                                "control_name"
+                            ),
+                            GetBoolArgument(
+                                arguments,
+                                "exact_name"
+                            )
+                        ),
+                    cancellationToken
+                );
+
+            case "windows_wait_for_window":
+                return await Task.Run(
+                    () =>
+                        WindowsControlTools.WaitForWindow(
+                            GetStringArgument(
+                                arguments,
+                                "window_title"
+                            ),
+                            GetIntArgument(
+                                arguments,
+                                "timeout_seconds"
+                            )
+                        ),
+                    cancellationToken
+                );
+
+            case "windows_wait_for_control":
+                return await Task.Run(
+                    () =>
+                        WindowsControlTools.WaitForControl(
+                            GetStringArgument(
+                                arguments,
+                                "window_title"
+                            ),
+                            GetStringArgument(
+                                arguments,
+                                "control_type"
+                            ),
+                            GetStringArgument(
+                                arguments,
+                                "control_name"
+                            ),
+                            GetBoolArgument(
+                                arguments,
+                                "exact_name"
+                            ),
+                            GetIntArgument(
+                                arguments,
+                                "timeout_seconds"
+                            )
+                        ),
+                    cancellationToken
+                );
+
+            // =================================================
             // BROWSER CORE
+            // =================================================
 
             case "start_browser":
                 return await BrowserTools.StartBrowserAsync();
@@ -2171,7 +3070,10 @@ public sealed class OperatorAgent
 
             case "browser_navigate":
                 return await BrowserTools.NavigateAsync(
-                    GetStringArgument(arguments, "url")
+                    GetStringArgument(
+                        arguments,
+                        "url"
+                    )
                 );
 
             case "browser_get_page_info":
@@ -2188,248 +3090,515 @@ public sealed class OperatorAgent
 
             case "browser_find":
                 return await BrowserTools.FindElementsAsync(
-                    GetStringArgument(arguments, "locator_type"),
-                    GetStringArgument(arguments, "query")
+                    GetStringArgument(
+                        arguments,
+                        "locator_type"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "query"
+                    )
                 );
 
-            // ROLE
+            // =================================================
+            // BROWSER ROLE
+            // =================================================
 
             case "browser_role_find":
                 return await BrowserTools.FindByRoleAsync(
-                    GetStringArgument(arguments, "role"),
-                    GetStringArgument(arguments, "name"),
-                    GetBoolArgument(arguments, "exact")
+                    GetStringArgument(
+                        arguments,
+                        "role"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "name"
+                    ),
+                    GetBoolArgument(
+                        arguments,
+                        "exact"
+                    )
                 );
 
             case "browser_role_click":
                 return await BrowserTools.ClickRoleAsync(
-                    GetStringArgument(arguments, "role"),
-                    GetStringArgument(arguments, "name"),
-                    GetBoolArgument(arguments, "exact")
+                    GetStringArgument(
+                        arguments,
+                        "role"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "name"
+                    ),
+                    GetBoolArgument(
+                        arguments,
+                        "exact"
+                    )
                 );
 
             case "browser_role_fill":
                 return await BrowserTools.FillRoleAsync(
-                    GetStringArgument(arguments, "role"),
-                    GetStringArgument(arguments, "name"),
-                    GetBoolArgument(arguments, "exact"),
-                    GetStringArgument(arguments, "text")
+                    GetStringArgument(
+                        arguments,
+                        "role"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "name"
+                    ),
+                    GetBoolArgument(
+                        arguments,
+                        "exact"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "text"
+                    )
                 );
 
             case "browser_role_wait":
                 return await BrowserTools.WaitForRoleAsync(
-                    GetStringArgument(arguments, "role"),
-                    GetStringArgument(arguments, "name"),
-                    GetBoolArgument(arguments, "exact"),
-                    GetStringArgument(arguments, "state"),
-                    GetIntArgument(arguments, "timeout_seconds")
+                    GetStringArgument(
+                        arguments,
+                        "role"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "name"
+                    ),
+                    GetBoolArgument(
+                        arguments,
+                        "exact"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "state"
+                    ),
+                    GetIntArgument(
+                        arguments,
+                        "timeout_seconds"
+                    )
                 );
 
             case "browser_role_get_text":
                 return await BrowserTools.GetRoleTextAsync(
-                    GetStringArgument(arguments, "role"),
-                    GetStringArgument(arguments, "name"),
-                    GetBoolArgument(arguments, "exact")
+                    GetStringArgument(
+                        arguments,
+                        "role"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "name"
+                    ),
+                    GetBoolArgument(
+                        arguments,
+                        "exact"
+                    )
                 );
 
             case "browser_exact_text":
                 return await BrowserTools.FindElementsAsync(
                     "exact_text",
-                    GetStringArgument(arguments, "text")
+                    GetStringArgument(
+                        arguments,
+                        "text"
+                    )
                 );
 
-            // VISION
+            // =================================================
+            // BROWSER VISION
+            // =================================================
 
             case "browser_visual_inspect":
                 return await BrowserVisionTools
                     .InspectCurrentPageAsync(
-                        GetStringArgument(arguments, "question"),
-                        GetBoolArgument(arguments, "full_page"),
+                        GetStringArgument(
+                            arguments,
+                            "question"
+                        ),
+                        GetBoolArgument(
+                            arguments,
+                            "full_page"
+                        ),
                         cancellationToken
                     );
 
-            // SCREENSHOT
+            // =================================================
+            // BROWSER SCREENSHOTS
+            // =================================================
 
             case "browser_screenshot":
                 return await BrowserTools.ScreenshotAsync(
-                    GetStringArgument(arguments, "relative_path"),
-                    GetBoolArgument(arguments, "full_page")
+                    GetStringArgument(
+                        arguments,
+                        "relative_path"
+                    ),
+                    GetBoolArgument(
+                        arguments,
+                        "full_page"
+                    )
                 );
 
             case "browser_list_screenshots":
                 return BrowserTools.ListScreenshots();
 
-            // 0.6F-4 COORDINATES
+            // =================================================
+            // BROWSER COORDINATES
+            // =================================================
 
             case "browser_get_viewport":
                 return await BrowserTools.GetViewportInfoAsync();
 
             case "browser_element_box":
                 return await BrowserTools.GetElementBoxAsync(
-                    GetStringArgument(arguments, "locator_type"),
-                    GetStringArgument(arguments, "query")
+                    GetStringArgument(
+                        arguments,
+                        "locator_type"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "query"
+                    )
                 );
 
             case "browser_mouse_move":
                 return await BrowserTools.MouseMoveAsync(
-                    GetIntArgument(arguments, "x"),
-                    GetIntArgument(arguments, "y")
+                    GetIntArgument(
+                        arguments,
+                        "x"
+                    ),
+                    GetIntArgument(
+                        arguments,
+                        "y"
+                    )
                 );
 
             case "browser_mouse_click":
                 return await BrowserTools.MouseClickAsync(
-                    GetIntArgument(arguments, "x"),
-                    GetIntArgument(arguments, "y")
+                    GetIntArgument(
+                        arguments,
+                        "x"
+                    ),
+                    GetIntArgument(
+                        arguments,
+                        "y"
+                    )
                 );
 
             case "browser_mouse_double_click":
                 return await BrowserTools.MouseDoubleClickAsync(
-                    GetIntArgument(arguments, "x"),
-                    GetIntArgument(arguments, "y")
+                    GetIntArgument(
+                        arguments,
+                        "x"
+                    ),
+                    GetIntArgument(
+                        arguments,
+                        "y"
+                    )
                 );
 
-            // INSPECTION
+            // =================================================
+            // BROWSER INSPECTION
+            // =================================================
 
             case "browser_get_text":
                 return await BrowserTools.GetElementTextAsync(
-                    GetStringArgument(arguments, "locator_type"),
-                    GetStringArgument(arguments, "query")
+                    GetStringArgument(
+                        arguments,
+                        "locator_type"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "query"
+                    )
                 );
 
             case "browser_get_attribute":
                 return await BrowserTools.GetAttributeAsync(
-                    GetStringArgument(arguments, "locator_type"),
-                    GetStringArgument(arguments, "query"),
-                    GetStringArgument(arguments, "attribute_name")
+                    GetStringArgument(
+                        arguments,
+                        "locator_type"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "query"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "attribute_name"
+                    )
                 );
 
             case "browser_get_value":
                 return await BrowserTools.GetValueAsync(
-                    GetStringArgument(arguments, "locator_type"),
-                    GetStringArgument(arguments, "query")
+                    GetStringArgument(
+                        arguments,
+                        "locator_type"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "query"
+                    )
                 );
 
             case "browser_is_visible":
                 return await BrowserTools.IsVisibleAsync(
-                    GetStringArgument(arguments, "locator_type"),
-                    GetStringArgument(arguments, "query")
+                    GetStringArgument(
+                        arguments,
+                        "locator_type"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "query"
+                    )
                 );
 
-            // WAIT
+            // =================================================
+            // BROWSER WAIT
+            // =================================================
 
             case "browser_wait":
                 return await BrowserTools.WaitForElementAsync(
-                    GetStringArgument(arguments, "locator_type"),
-                    GetStringArgument(arguments, "query"),
-                    GetStringArgument(arguments, "state"),
-                    GetIntArgument(arguments, "timeout_seconds")
+                    GetStringArgument(
+                        arguments,
+                        "locator_type"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "query"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "state"
+                    ),
+                    GetIntArgument(
+                        arguments,
+                        "timeout_seconds"
+                    )
                 );
 
             case "browser_wait_for_url":
                 return await BrowserTools.WaitForUrlAsync(
-                    GetStringArgument(arguments, "url_pattern"),
-                    GetIntArgument(arguments, "timeout_seconds")
+                    GetStringArgument(
+                        arguments,
+                        "url_pattern"
+                    ),
+                    GetIntArgument(
+                        arguments,
+                        "timeout_seconds"
+                    )
                 );
 
             case "browser_wait_for_text":
                 return await BrowserTools.WaitForTextAsync(
-                    GetStringArgument(arguments, "text"),
-                    GetBoolArgument(arguments, "exact"),
-                    GetIntArgument(arguments, "timeout_seconds")
+                    GetStringArgument(
+                        arguments,
+                        "text"
+                    ),
+                    GetBoolArgument(
+                        arguments,
+                        "exact"
+                    ),
+                    GetIntArgument(
+                        arguments,
+                        "timeout_seconds"
+                    )
                 );
 
-            // INPUT
+            // =================================================
+            // BROWSER INPUT
+            // =================================================
 
             case "browser_click":
                 return await BrowserTools.ClickAsync(
-                    GetStringArgument(arguments, "locator_type"),
-                    GetStringArgument(arguments, "query")
+                    GetStringArgument(
+                        arguments,
+                        "locator_type"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "query"
+                    )
                 );
 
             case "browser_fill":
                 return await BrowserTools.FillAsync(
-                    GetStringArgument(arguments, "locator_type"),
-                    GetStringArgument(arguments, "query"),
-                    GetStringArgument(arguments, "text")
+                    GetStringArgument(
+                        arguments,
+                        "locator_type"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "query"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "text"
+                    )
                 );
 
             case "browser_type":
                 return await BrowserTools.TypeAsync(
-                    GetStringArgument(arguments, "locator_type"),
-                    GetStringArgument(arguments, "query"),
-                    GetStringArgument(arguments, "text")
+                    GetStringArgument(
+                        arguments,
+                        "locator_type"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "query"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "text"
+                    )
                 );
 
             case "browser_press":
                 return await BrowserTools.PressAsync(
-                    GetStringArgument(arguments, "locator_type"),
-                    GetStringArgument(arguments, "query"),
-                    GetStringArgument(arguments, "key")
+                    GetStringArgument(
+                        arguments,
+                        "locator_type"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "query"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "key"
+                    )
                 );
 
             case "browser_page_key":
                 return await BrowserTools.PressPageKeyAsync(
-                    GetStringArgument(arguments, "key")
+                    GetStringArgument(
+                        arguments,
+                        "key"
+                    )
                 );
 
-            // SCROLL
+            // =================================================
+            // BROWSER SCROLL
+            // =================================================
 
             case "browser_scroll":
                 return await BrowserTools.ScrollPageAsync(
-                    GetIntArgument(arguments, "delta_y")
+                    GetIntArgument(
+                        arguments,
+                        "delta_y"
+                    )
                 );
 
             case "browser_scroll_to":
                 return await BrowserTools.ScrollToElementAsync(
-                    GetStringArgument(arguments, "locator_type"),
-                    GetStringArgument(arguments, "query")
+                    GetStringArgument(
+                        arguments,
+                        "locator_type"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "query"
+                    )
                 );
 
-            // CHECKBOX
+            // =================================================
+            // BROWSER CHECKBOX
+            // =================================================
 
             case "browser_set_checked":
                 return await BrowserTools.SetCheckedAsync(
-                    GetStringArgument(arguments, "locator_type"),
-                    GetStringArgument(arguments, "query"),
-                    GetBoolArgument(arguments, "checked")
+                    GetStringArgument(
+                        arguments,
+                        "locator_type"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "query"
+                    ),
+                    GetBoolArgument(
+                        arguments,
+                        "checked"
+                    )
                 );
 
             case "browser_get_checked":
                 return await BrowserTools.GetCheckedStateAsync(
-                    GetStringArgument(arguments, "locator_type"),
-                    GetStringArgument(arguments, "query")
+                    GetStringArgument(
+                        arguments,
+                        "locator_type"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "query"
+                    )
                 );
 
-            // SELECT
+            // =================================================
+            // BROWSER SELECT
+            // =================================================
 
             case "browser_select_option":
                 return await BrowserTools.SelectOptionAsync(
-                    GetStringArgument(arguments, "locator_type"),
-                    GetStringArgument(arguments, "query"),
-                    GetStringArgument(arguments, "selection_type"),
-                    GetStringArgument(arguments, "selection")
+                    GetStringArgument(
+                        arguments,
+                        "locator_type"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "query"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "selection_type"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "selection"
+                    )
                 );
 
-            // UPLOAD / DOWNLOAD
+            // =================================================
+            // BROWSER FILES
+            // =================================================
 
             case "browser_upload_desktop_file":
                 return await BrowserTools.UploadDesktopFileAsync(
-                    GetStringArgument(arguments, "locator_type"),
-                    GetStringArgument(arguments, "query"),
-                    GetStringArgument(arguments, "relative_path")
+                    GetStringArgument(
+                        arguments,
+                        "locator_type"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "query"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "relative_path"
+                    )
                 );
 
             case "browser_download":
                 return await BrowserTools.DownloadByClickAsync(
-                    GetStringArgument(arguments, "locator_type"),
-                    GetStringArgument(arguments, "query"),
-                    GetStringArgument(arguments, "preferred_relative_path")
+                    GetStringArgument(
+                        arguments,
+                        "locator_type"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "query"
+                    ),
+                    GetStringArgument(
+                        arguments,
+                        "preferred_relative_path"
+                    )
                 );
 
             case "browser_list_downloads":
                 return BrowserTools.ListDownloads();
 
-            // HISTORY
+            // =================================================
+            // BROWSER NAVIGATION
+            // =================================================
 
             case "browser_back":
                 return await BrowserTools.BackAsync();
@@ -2451,12 +3620,14 @@ public sealed class OperatorAgent
                     if (string.IsNullOrWhiteSpace(
                             url))
                     {
-                        return await BrowserTools.NewTabAsync();
+                        return
+                            await BrowserTools.NewTabAsync();
                     }
 
-                    return await BrowserTools.NewTabAsync(
-                        url
-                    );
+                    return
+                        await BrowserTools.NewTabAsync(
+                            url
+                        );
                 }
 
             case "browser_list_tabs":
@@ -2464,12 +3635,18 @@ public sealed class OperatorAgent
 
             case "browser_switch_tab":
                 return await BrowserTools.SwitchTabAsync(
-                    GetIntArgument(arguments, "tab_number")
+                    GetIntArgument(
+                        arguments,
+                        "tab_number"
+                    )
                 );
 
             case "browser_close_tab":
                 return await BrowserTools.CloseTabAsync(
-                    GetIntArgument(arguments, "tab_number")
+                    GetIntArgument(
+                        arguments,
+                        "tab_number"
+                    )
                 );
 
             case "stop_browser":
