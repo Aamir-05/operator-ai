@@ -19,10 +19,6 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- ================================================= -->
-        <!-- HEADER                                            -->
-        <!-- ================================================= -->
-
         <StackPanel Grid.Row="0">
 
             <TextBlock
@@ -37,22 +33,12 @@
 
         </StackPanel>
 
-
-        <!-- ================================================= -->
-        <!-- TASK LABEL                                        -->
-        <!-- ================================================= -->
-
         <TextBlock
             Grid.Row="1"
             Text="What should I do?"
             FontSize="20"
             FontWeight="SemiBold"
             Margin="0,0,0,8"/>
-
-
-        <!-- ================================================= -->
-        <!-- TASK INPUT                                        -->
-        <!-- ================================================= -->
 
         <TextBox
             x:Name="TaskBox"
@@ -65,11 +51,6 @@
             Padding="12"
             Margin="0,0,0,15"/>
 
-
-        <!-- ================================================= -->
-        <!-- BUTTONS                                           -->
-        <!-- ================================================= -->
-
         <WrapPanel
             Grid.Row="3"
             Margin="0,0,0,22">
@@ -81,6 +62,15 @@
                 Height="45"
                 Margin="0,0,10,10"
                 Click="AskAI_Click"/>
+
+            <Button
+                x:Name="StopTaskButton"
+                Content="Stop Task"
+                Width="125"
+                Height="45"
+                Margin="0,0,10,10"
+                IsEnabled="False"
+                Click="StopTask_Click"/>
 
             <Button
                 Content="Open Notepad"
@@ -126,22 +116,12 @@
 
         </WrapPanel>
 
-
-        <!-- ================================================= -->
-        <!-- ACTIVITY LABEL                                    -->
-        <!-- ================================================= -->
-
         <TextBlock
             Grid.Row="4"
             Text="Activity"
             FontSize="20"
             FontWeight="SemiBold"
             Margin="0,0,0,10"/>
-
-
-        <!-- ================================================= -->
-        <!-- ACTIVITY LOG                                      -->
-        <!-- ================================================= -->
 
         <TextBox
             x:Name="LogBox"

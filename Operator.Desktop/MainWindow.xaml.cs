@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using Operator.AI;
@@ -8,6 +9,8 @@ namespace Operator.Desktop;
 
 public partial class MainWindow : Window
 {
+    private CancellationTokenSource? _agentCancellation;
+
     public MainWindow()
     {
         InitializeComponent();
@@ -36,9 +39,23 @@ public partial class MainWindow : Window
             return;
         }
 
+        // Prevent more than one agent task running at once.
+        if (_agentCancellation != null)
+        {
+            Log("A task is already running.");
+            return;
+        }
+
         try
         {
-            AskAIButton.IsEnabled = false;
+            _agentCancellation =
+                new CancellationTokenSource();
+
+            AskAIButton.IsEnabled =
+                false;
+
+            StopTaskButton.IsEnabled =
+                true;
 
             Log("--------------------------------");
             Log($"TASK: {task}");
@@ -53,20 +70,66 @@ public partial class MainWindow : Window
                     message =>
                         Dispatcher.Invoke(
                             () => Log(message)
-                        )
+                        ),
+                    _agentCancellation.Token
                 );
 
             Log($"AI: {result}");
-            Log("Task finished.");
+        }
+        catch (OperationCanceledException)
+        {
+            Log(
+                "[CANCELLED] Task stopped."
+            );
         }
         catch (Exception ex)
         {
-            Log($"ERROR: {ex.Message}");
+            Log(
+                $"ERROR: {ex.Message}"
+            );
         }
         finally
         {
-            AskAIButton.IsEnabled = true;
+            _agentCancellation?.Dispose();
+
+            _agentCancellation =
+                null;
+
+            AskAIButton.IsEnabled =
+                true;
+
+            StopTaskButton.IsEnabled =
+                false;
+
+            Log("Task finished.");
         }
+    }
+
+    // =========================================================
+    // STOP TASK
+    // =========================================================
+
+    private void StopTask_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        if (_agentCancellation == null)
+        {
+            Log(
+                "No AI task is currently running."
+            );
+
+            return;
+        }
+
+        Log(
+            "Stop requested..."
+        );
+
+        StopTaskButton.IsEnabled =
+            false;
+
+        _agentCancellation.Cancel();
     }
 
     // =========================================================
@@ -158,7 +221,9 @@ public partial class MainWindow : Window
 
             Log(typeResult);
 
-            Log("Windows UI test finished.");
+            Log(
+                "Windows UI test finished."
+            );
         }
         catch (Exception ex)
         {
@@ -169,7 +234,7 @@ public partial class MainWindow : Window
     }
 
     // =========================================================
-    // CTRL+S TEST
+    // KEYBOARD TEST
     // =========================================================
 
     private async void SaveKeyTest_Click(
@@ -214,7 +279,9 @@ public partial class MainWindow : Window
 
             Log(keyResult);
 
-            Log("Keyboard test finished.");
+            Log(
+                "Keyboard test finished."
+            );
         }
         catch (Exception ex)
         {
@@ -225,8 +292,7 @@ public partial class MainWindow : Window
     }
 
     // =========================================================
-    // VERSION 0.5D
-    // SAVE AS AUTOMATION TEST
+    // SAVE DIALOG TEST
     // =========================================================
 
     private async void SaveDialogTest_Click(
@@ -236,12 +302,9 @@ public partial class MainWindow : Window
         try
         {
             Log("--------------------------------");
-            Log("Starting Save As automation test...");
-
-            // -------------------------------------------------
-            // STEP 1
-            // Build target path
-            // -------------------------------------------------
+            Log(
+                "Starting Save As automation test..."
+            );
 
             string desktop =
                 Environment.GetFolderPath(
@@ -258,9 +321,8 @@ public partial class MainWindow : Window
                 $"Target file: {targetPath}"
             );
 
-            // Remove previous test file
-            // so verification is genuine.
-            if (System.IO.File.Exists(targetPath))
+            if (System.IO.File.Exists(
+                    targetPath))
             {
                 try
                 {
@@ -272,20 +334,13 @@ public partial class MainWindow : Window
                         "Removed previous agent-test.txt."
                     );
                 }
-                catch (Exception deleteEx)
+                catch (Exception ex)
                 {
                     Log(
-                        $"WARNING: Could not delete previous test file: {deleteEx.Message}"
+                        $"WARNING: Could not remove existing test file: {ex.Message}"
                     );
                 }
             }
-
-            // -------------------------------------------------
-            // STEP 2
-            // Open Notepad
-            // -------------------------------------------------
-
-            Log("Opening Notepad...");
 
             string openResult =
                 WindowsTools.OpenApplication(
@@ -296,13 +351,6 @@ public partial class MainWindow : Window
 
             await Task.Delay(1500);
 
-            // -------------------------------------------------
-            // STEP 3
-            // Focus Notepad
-            // -------------------------------------------------
-
-            Log("Focusing Notepad...");
-
             string focusResult =
                 WindowsUiTools.FocusWindow(
                     "Notepad"
@@ -311,13 +359,6 @@ public partial class MainWindow : Window
             Log(focusResult);
 
             await Task.Delay(300);
-
-            // -------------------------------------------------
-            // STEP 4
-            // Type content
-            // -------------------------------------------------
-
-            Log("Typing document content...");
 
             string typeResult =
                 WindowsUiTools.TypeText(
@@ -329,13 +370,8 @@ public partial class MainWindow : Window
 
             await Task.Delay(600);
 
-            // -------------------------------------------------
-            // STEP 5
-            // Open Save As directly
-            // -------------------------------------------------
-
             Log(
-                "Opening Save As directly with CTRL+SHIFT+S..."
+                "Opening Save As with CTRL+SHIFT+S..."
             );
 
             string saveAsResult =
@@ -347,59 +383,24 @@ public partial class MainWindow : Window
 
             await Task.Delay(2000);
 
-            // -------------------------------------------------
-            // STEP 6
-            // Inspect the foreground window
-            // -------------------------------------------------
-
-            Log(
-                "Inspecting foreground after Save As..."
-            );
-
-            string foreground =
-                WindowsUiTools.InspectWindow(
-                    "__FOREGROUND__"
-                );
-
-            Log(foreground);
-
-            // -------------------------------------------------
-            // STEP 7
-            // Select existing filename
-            // -------------------------------------------------
-
             Log(
                 "Selecting existing filename..."
             );
 
-            string selectAllResult =
+            string selectResult =
                 WindowsInputTools.PressKey(
                     "CTRL+A"
                 );
 
-            Log(selectAllResult);
+            Log(selectResult);
 
             await Task.Delay(300);
-
-            // -------------------------------------------------
-            // STEP 8
-            // Copy full target path to clipboard
-            // -------------------------------------------------
-
-            Log(
-                $"Putting target path on clipboard: {targetPath}"
-            );
 
             System.Windows.Clipboard.SetText(
                 targetPath
             );
 
             await Task.Delay(200);
-
-            // -------------------------------------------------
-            // STEP 9
-            // Paste target filename/path
-            // -------------------------------------------------
 
             Log(
                 "Entering target file path..."
@@ -414,12 +415,9 @@ public partial class MainWindow : Window
 
             await Task.Delay(500);
 
-            // -------------------------------------------------
-            // STEP 10
-            // Save
-            // -------------------------------------------------
-
-            Log("Pressing ENTER to save...");
+            Log(
+                "Pressing ENTER to save..."
+            );
 
             string enterResult =
                 WindowsInputTools.PressKey(
@@ -430,51 +428,9 @@ public partial class MainWindow : Window
 
             await Task.Delay(2000);
 
-            // -------------------------------------------------
-            // STEP 11
-            // Check whether file exists
-            // -------------------------------------------------
-
-            bool fileExists =
-                System.IO.File.Exists(
-                    targetPath
-                );
-
-            if (!fileExists)
-            {
-                Log(
-                    "File not found yet. Checking foreground for a confirmation dialog..."
-                );
-
-                string possibleDialog =
-                    WindowsUiTools.InspectWindow(
-                        "__FOREGROUND__"
-                    );
-
-                Log(possibleDialog);
-
-                // Possible overwrite/confirmation dialog.
-                string confirmResult =
-                    WindowsInputTools.PressKey(
-                        "ENTER"
-                    );
-
-                Log(confirmResult);
-
-                await Task.Delay(1500);
-
-                fileExists =
-                    System.IO.File.Exists(
-                        targetPath
-                    );
-            }
-
-            // -------------------------------------------------
-            // STEP 12
-            // Verify using our own Windows tool
-            // -------------------------------------------------
-
-            Log("Verifying saved file...");
+            Log(
+                "Verifying saved file..."
+            );
 
             string verify =
                 WindowsTools.DesktopFileExists(
@@ -483,15 +439,9 @@ public partial class MainWindow : Window
 
             Log(verify);
 
-            // -------------------------------------------------
-            // STEP 13
-            // Read file back
-            // -------------------------------------------------
-
-            if (fileExists)
+            if (System.IO.File.Exists(
+                    targetPath))
             {
-                Log("Reading saved file...");
-
                 string readResult =
                     WindowsTools.ReadDesktopFile(
                         "agent-test.txt"
@@ -508,17 +458,6 @@ public partial class MainWindow : Window
                 Log(
                     "ERROR: agent-test.txt was not created."
                 );
-
-                Log(
-                    "Final foreground window:"
-                );
-
-                string finalForeground =
-                    WindowsUiTools.InspectWindow(
-                        "__FOREGROUND__"
-                    );
-
-                Log(finalForeground);
             }
 
             Log(
