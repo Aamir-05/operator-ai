@@ -10,6 +10,10 @@ public sealed class OperatorAgent
 {
     private readonly ResponsesClient _client;
 
+    // =========================================================
+    // APPLICATION TOOLS
+    // =========================================================
+
     private static readonly FunctionTool OpenApplicationTool =
         ResponseTool.CreateFunctionTool(
             functionName: "open_application",
@@ -31,6 +35,10 @@ public sealed class OperatorAgent
             ),
             strictModeEnabled: true
         );
+
+    // =========================================================
+    // DESKTOP FILE TOOLS
+    // =========================================================
 
     private static readonly FunctionTool CreateFolderTool =
         ResponseTool.CreateFunctionTool(
@@ -135,11 +143,15 @@ public sealed class OperatorAgent
             strictModeEnabled: false
         );
 
+    // =========================================================
+    // WINDOWS UI TOOLS
+    // =========================================================
+
     private static readonly FunctionTool ListWindowsTool =
         ResponseTool.CreateFunctionTool(
             functionName: "list_windows",
             functionDescription:
-                "List visible top-level windows on the Windows desktop.",
+                "List visible top-level Windows application windows.",
             functionParameters: null,
             strictModeEnabled: false
         );
@@ -216,11 +228,15 @@ public sealed class OperatorAgent
             strictModeEnabled: true
         );
 
+    // =========================================================
+    // KEYBOARD TOOL
+    // =========================================================
+
     private static readonly FunctionTool PressKeyTool =
         ResponseTool.CreateFunctionTool(
             functionName: "press_key",
             functionDescription:
-                "Press a Windows keyboard key or shortcut. Examples: CTRL+S, CTRL+A, ALT+F4, ENTER, TAB, ESC, LEFT, RIGHT, UP, DOWN.",
+                "Press a Windows keyboard key or shortcut. Examples: CTRL+S, CTRL+A, CTRL+SHIFT+S, ALT+F4, ENTER, TAB, ESC, LEFT, RIGHT, UP, DOWN.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -237,6 +253,40 @@ public sealed class OperatorAgent
             ),
             strictModeEnabled: true
         );
+
+    // =========================================================
+    // VERSION 0.5E
+    // RELIABLE SAVE WORKFLOW
+    // =========================================================
+
+    private static readonly FunctionTool SaveActiveDocumentTool =
+        ResponseTool.CreateFunctionTool(
+            functionName:
+                "save_active_document_as_desktop_file",
+            functionDescription:
+                "Reliably save the currently active document to a file inside the Windows Desktop. Uses Save As, waits for Windows, retries when necessary, and verifies that the file was created. Use this instead of manually performing Save As keystrokes whenever possible.",
+            functionParameters: BinaryData.FromString(
+                """
+                {
+                  "type": "object",
+                  "properties": {
+                    "relative_path": {
+                      "type": "string",
+                      "description":
+                        "Path relative to the Desktop, for example operations-report.txt or Reports\\daily-report.txt"
+                    }
+                  },
+                  "required": ["relative_path"],
+                  "additionalProperties": false
+                }
+                """
+            ),
+            strictModeEnabled: true
+        );
+
+    // =========================================================
+    // CONSTRUCTOR
+    // =========================================================
 
     public OperatorAgent()
     {
@@ -256,6 +306,10 @@ public sealed class OperatorAgent
             new ResponsesClient(apiKey);
     }
 
+    // =========================================================
+    // AGENT LOOP
+    // =========================================================
+
     public async Task<string> RunAsync(
         string task,
         Action<string>? log = null)
@@ -265,7 +319,7 @@ public sealed class OperatorAgent
             ResponseItem.CreateUserMessageItem(task)
         ];
 
-        for (int step = 1; step <= 25; step++)
+        for (int step = 1; step <= 30; step++)
         {
             log?.Invoke(
                 $"AI planning step {step}..."
@@ -278,29 +332,61 @@ public sealed class OperatorAgent
                         """
                         You are Operator AI, a Windows automation agent.
 
-                        Complete the user's task using the available tools.
+                        Your job is to complete real tasks on the user's Windows computer using the available tools.
 
-                        Rules:
+                        GENERAL RULES
+
                         - Use tools for real computer actions.
                         - Never claim an action happened unless a tool confirms it.
                         - Verify important actions whenever practical.
-                        - Only work within the permissions provided by the tools.
-                        - Prefer structured Windows UI tools over guessing.
-                        - If an application was opened and you need its real window title, use list_windows.
-                        - Use inspect_window when you need to understand an application's available controls.
-                        - Use focus_window before typing into a desktop application.
-                        - Use type_text for text entry into Windows applications.
-                        - Use press_key for Windows keyboard shortcuts such as CTRL+S, CTRL+A, ENTER, TAB, ESC and ALT+F4.
-                        - After pressing a keyboard shortcut that opens a dialog, use list_windows or inspect_window to discover the new UI state.
-                        - Never invent a successful result.
-                        - If something is not possible with the available tools, explain clearly.
+                        - Never invent successful results.
+                        - Only operate within permissions exposed by the tools.
+                        - If something fails, inspect the current state and recover when possible.
+                        - Do not repeat the same failed action indefinitely.
+
+                        WINDOWS APPLICATION RULES
+
+                        - Use open_application to launch supported applications.
+                        - After opening an application, use list_windows when you need its actual window title.
+                        - Use focus_window before interacting with a desktop application.
+                        - Use inspect_window when you need to understand the current UI state.
+                        - Use type_text for normal text entry.
+
+                        KEYBOARD RULES
+
+                        - Use press_key for shortcuts such as CTRL+A, CTRL+S, CTRL+SHIFT+S, ENTER, TAB, ESC, and ALT+F4.
+                        - If a keyboard action changes the UI, inspect the resulting state when needed.
+
+                        SAVING RULES
+
+                        - When the user asks to save an active document to the Desktop, prefer save_active_document_as_desktop_file.
+                        - Do not manually reproduce the Save As sequence with several press_key calls when save_active_document_as_desktop_file can do it.
+                        - The save workflow accepts paths relative to Desktop.
+                        - After saving, verify the file exists.
+                        - If the user asks to verify content, read the saved file back.
+
+                        FILE RULES
+
+                        - Use desktop_file_exists to verify a file.
+                        - Use read_desktop_file when content verification is required.
+                        - Use create_desktop_file only when direct file creation is appropriate.
+                        - When the user explicitly wants an application to create/save the document, use the application UI and save workflow instead of directly creating the file.
+
+                        RECOVERY RULES
+
+                        - When a tool returns ERROR or NOT_FOUND, do not immediately claim failure.
+                        - Inspect the current state if another available tool could reveal what happened.
+                        - Try a reasonable alternative once or twice.
+                        - If recovery is not possible with available tools, explain exactly what failed.
                         """
                 };
 
+            // Application
             options.Tools.Add(
                 OpenApplicationTool
             );
 
+            // Files
             options.Tools.Add(
                 CreateFolderTool
             );
@@ -321,6 +407,7 @@ public sealed class OperatorAgent
                 ListDesktopTool
             );
 
+            // UI
             options.Tools.Add(
                 ListWindowsTool
             );
@@ -337,8 +424,14 @@ public sealed class OperatorAgent
                 TypeTextTool
             );
 
+            // Keyboard
             options.Tools.Add(
                 PressKeyTool
+            );
+
+            // Reliable workflow
+            options.Tools.Add(
+                SaveActiveDocumentTool
             );
 
             ResponseResult response =
@@ -386,8 +479,12 @@ public sealed class OperatorAgent
         }
 
         return
-            "Agent stopped because the maximum number of steps was reached.";
+            "Agent stopped because the maximum number of planning steps was reached.";
     }
+
+    // =========================================================
+    // TOOL EXECUTION
+    // =========================================================
 
     private static string ExecuteTool(
         FunctionCallResponseItem call,
@@ -414,13 +511,17 @@ public sealed class OperatorAgent
 
         switch (call.FunctionName)
         {
+            // =================================================
+            // OPEN APPLICATION
+            // =================================================
+
             case "open_application":
                 {
                     string app =
-                        arguments
-                            .GetProperty("application")
-                            .GetString()
-                        ?? "";
+                        GetStringArgument(
+                            arguments,
+                            "application"
+                        );
 
                     log?.Invoke(
                         $"AI requested: Open application '{app}'"
@@ -436,13 +537,17 @@ public sealed class OperatorAgent
                     return result;
                 }
 
+            // =================================================
+            // CREATE FOLDER
+            // =================================================
+
             case "create_desktop_folder":
                 {
                     string folder =
-                        arguments
-                            .GetProperty("folder_name")
-                            .GetString()
-                        ?? "";
+                        GetStringArgument(
+                            arguments,
+                            "folder_name"
+                        );
 
                     log?.Invoke(
                         $"AI requested: Create folder '{folder}'"
@@ -458,19 +563,23 @@ public sealed class OperatorAgent
                     return result;
                 }
 
+            // =================================================
+            // CREATE FILE
+            // =================================================
+
             case "create_desktop_file":
                 {
                     string path =
-                        arguments
-                            .GetProperty("relative_path")
-                            .GetString()
-                        ?? "";
+                        GetStringArgument(
+                            arguments,
+                            "relative_path"
+                        );
 
                     string content =
-                        arguments
-                            .GetProperty("content")
-                            .GetString()
-                        ?? "";
+                        GetStringArgument(
+                            arguments,
+                            "content"
+                        );
 
                     log?.Invoke(
                         $"AI requested: Create file '{path}'"
@@ -487,13 +596,17 @@ public sealed class OperatorAgent
                     return result;
                 }
 
+            // =================================================
+            // READ FILE
+            // =================================================
+
             case "read_desktop_file":
                 {
                     string path =
-                        arguments
-                            .GetProperty("relative_path")
-                            .GetString()
-                        ?? "";
+                        GetStringArgument(
+                            arguments,
+                            "relative_path"
+                        );
 
                     log?.Invoke(
                         $"AI requested: Read file '{path}'"
@@ -509,13 +622,17 @@ public sealed class OperatorAgent
                     return result;
                 }
 
+            // =================================================
+            // FILE EXISTS
+            // =================================================
+
             case "desktop_file_exists":
                 {
                     string path =
-                        arguments
-                            .GetProperty("relative_path")
-                            .GetString()
-                        ?? "";
+                        GetStringArgument(
+                            arguments,
+                            "relative_path"
+                        );
 
                     log?.Invoke(
                         $"AI requested: Verify file '{path}'"
@@ -531,6 +648,10 @@ public sealed class OperatorAgent
                     return result;
                 }
 
+            // =================================================
+            // LIST DESKTOP
+            // =================================================
+
             case "list_desktop":
                 {
                     log?.Invoke(
@@ -544,6 +665,10 @@ public sealed class OperatorAgent
 
                     return result;
                 }
+
+            // =================================================
+            // LIST WINDOWS
+            // =================================================
 
             case "list_windows":
                 {
@@ -559,13 +684,17 @@ public sealed class OperatorAgent
                     return result;
                 }
 
+            // =================================================
+            // INSPECT WINDOW
+            // =================================================
+
             case "inspect_window":
                 {
                     string title =
-                        arguments
-                            .GetProperty("window_title")
-                            .GetString()
-                        ?? "";
+                        GetStringArgument(
+                            arguments,
+                            "window_title"
+                        );
 
                     log?.Invoke(
                         $"AI requested: Inspect window '{title}'"
@@ -581,13 +710,17 @@ public sealed class OperatorAgent
                     return result;
                 }
 
+            // =================================================
+            // FOCUS WINDOW
+            // =================================================
+
             case "focus_window":
                 {
                     string title =
-                        arguments
-                            .GetProperty("window_title")
-                            .GetString()
-                        ?? "";
+                        GetStringArgument(
+                            arguments,
+                            "window_title"
+                        );
 
                     log?.Invoke(
                         $"AI requested: Focus window '{title}'"
@@ -603,19 +736,23 @@ public sealed class OperatorAgent
                     return result;
                 }
 
+            // =================================================
+            // TYPE TEXT
+            // =================================================
+
             case "type_text":
                 {
                     string title =
-                        arguments
-                            .GetProperty("window_title")
-                            .GetString()
-                        ?? "";
+                        GetStringArgument(
+                            arguments,
+                            "window_title"
+                        );
 
                     string text =
-                        arguments
-                            .GetProperty("text")
-                            .GetString()
-                        ?? "";
+                        GetStringArgument(
+                            arguments,
+                            "text"
+                        );
 
                     log?.Invoke(
                         $"AI requested: Type text into '{title}'"
@@ -632,13 +769,17 @@ public sealed class OperatorAgent
                     return result;
                 }
 
+            // =================================================
+            // PRESS KEY
+            // =================================================
+
             case "press_key":
                 {
                     string keys =
-                        arguments
-                            .GetProperty("keys")
-                            .GetString()
-                        ?? "";
+                        GetStringArgument(
+                            arguments,
+                            "keys"
+                        );
 
                     log?.Invoke(
                         $"AI requested: Press '{keys}'"
@@ -654,6 +795,41 @@ public sealed class OperatorAgent
                     return result;
                 }
 
+            // =================================================
+            // 0.5E RELIABLE SAVE WORKFLOW
+            // =================================================
+
+            case "save_active_document_as_desktop_file":
+                {
+                    string path =
+                        GetStringArgument(
+                            arguments,
+                            "relative_path"
+                        );
+
+                    log?.Invoke(
+                        $"AI requested: Save active document as '{path}'"
+                    );
+
+                    log?.Invoke(
+                        "Running reliable Save As workflow..."
+                    );
+
+                    string result =
+                        WindowsWorkflowTools
+                            .SaveActiveDocumentAsDesktopFile(
+                                path
+                            );
+
+                    log?.Invoke(result);
+
+                    return result;
+                }
+
+            // =================================================
+            // UNKNOWN TOOL
+            // =================================================
+
             default:
                 {
                     string result =
@@ -663,6 +839,38 @@ public sealed class OperatorAgent
 
                     return result;
                 }
+        }
+    }
+
+    // =========================================================
+    // SAFE ARGUMENT PARSING
+    // =========================================================
+
+    private static string GetStringArgument(
+        JsonElement arguments,
+        string propertyName)
+    {
+        try
+        {
+            if (arguments.ValueKind !=
+                JsonValueKind.Object)
+            {
+                return "";
+            }
+
+            if (!arguments.TryGetProperty(
+                    propertyName,
+                    out JsonElement value))
+            {
+                return "";
+            }
+
+            return value.GetString()
+                ?? "";
+        }
+        catch
+        {
+            return "";
         }
     }
 }

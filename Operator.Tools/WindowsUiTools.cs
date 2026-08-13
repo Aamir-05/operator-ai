@@ -9,6 +9,26 @@ namespace Operator.Tools;
 
 public static class WindowsUiTools
 {
+    // =========================================================
+    // WINDOWS NATIVE API
+    // =========================================================
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetForegroundWindow();
+
+    [DllImport(
+        "user32.dll",
+        SetLastError = true)]
+    private static extern uint SendInput(
+        uint nInputs,
+        INPUT[] pInputs,
+        int cbSize
+    );
+
+    // =========================================================
+    // LIST TOP-LEVEL WINDOWS
+    // =========================================================
+
     public static string ListWindows()
     {
         try
@@ -19,7 +39,7 @@ public static class WindowsUiTools
             AutomationElementCollection children =
                 root.FindAll(
                     TreeScope.Children,
-                    Condition.TrueCondition
+                    System.Windows.Automation.Condition.TrueCondition
                 );
 
             List<string> windows = new();
@@ -28,14 +48,8 @@ public static class WindowsUiTools
             {
                 try
                 {
-                    if (element.Current.ControlType !=
-                        ControlType.Window)
-                    {
-                        continue;
-                    }
-
                     string name =
-                        element.Current.Name;
+                        element.Current.Name ?? "";
 
                     if (!string.IsNullOrWhiteSpace(name))
                     {
@@ -44,17 +58,17 @@ public static class WindowsUiTools
                 }
                 catch
                 {
-                    // Window may close while scanning.
+                    // Ignore elements that disappear.
                 }
             }
 
             if (windows.Count == 0)
             {
-                return "No visible windows found.";
+                return "No visible top-level elements found.";
             }
 
             return
-                "VISIBLE WINDOWS:\n" +
+                "VISIBLE TOP-LEVEL WINDOWS/ELEMENTS:\n" +
                 string.Join(
                     Environment.NewLine,
                     windows
@@ -65,6 +79,10 @@ public static class WindowsUiTools
             return $"ERROR: {ex.Message}";
         }
     }
+
+    // =========================================================
+    // INSPECT WINDOW / DIALOG
+    // =========================================================
 
     public static string InspectWindow(
         string windowTitle)
@@ -87,20 +105,30 @@ public static class WindowsUiTools
                 $"WINDOW: {window.Current.Name}"
             );
 
+            output.AppendLine(
+                $"Type: {window.Current.ControlType.ProgrammaticName}"
+            );
+
+            output.AppendLine(
+                $"AutomationId: {window.Current.AutomationId}"
+            );
+
+            output.AppendLine();
+
             AutomationElementCollection controls =
                 window.FindAll(
                     TreeScope.Descendants,
-                    Condition.TrueCondition
+                    System.Windows.Automation.Condition.TrueCondition
                 );
 
             int count = 0;
 
             foreach (AutomationElement control in controls)
             {
-                if (count >= 80)
+                if (count >= 150)
                 {
                     output.AppendLine(
-                        "... limited to 80 controls"
+                        "... output limited to 150 controls"
                     );
 
                     break;
@@ -109,7 +137,7 @@ public static class WindowsUiTools
                 try
                 {
                     string name =
-                        control.Current.Name;
+                        control.Current.Name ?? "";
 
                     string type =
                         control.Current
@@ -117,20 +145,28 @@ public static class WindowsUiTools
                             .ProgrammaticName;
 
                     string automationId =
-                        control.Current.AutomationId;
+                        control.Current.AutomationId ?? "";
+
+                    bool enabled =
+                        control.Current.IsEnabled;
+
+                    bool focusable =
+                        control.Current.IsKeyboardFocusable;
 
                     output.AppendLine(
                         $"[{count + 1}] " +
                         $"Type={type}, " +
                         $"Name=\"{name}\", " +
-                        $"AutomationId=\"{automationId}\""
+                        $"AutomationId=\"{automationId}\", " +
+                        $"Enabled={enabled}, " +
+                        $"Focusable={focusable}"
                     );
 
                     count++;
                 }
                 catch
                 {
-                    // Ignore disappearing controls.
+                    // Ignore inaccessible controls.
                 }
             }
 
@@ -141,6 +177,10 @@ public static class WindowsUiTools
             return $"ERROR: {ex.Message}";
         }
     }
+
+    // =========================================================
+    // FOCUS WINDOW
+    // =========================================================
 
     public static string FocusWindow(
         string windowTitle)
@@ -161,13 +201,17 @@ public static class WindowsUiTools
             Thread.Sleep(300);
 
             return
-                $"SUCCESS: Focused window '{window.Current.Name}'.";
+                $"SUCCESS: Focused '{window.Current.Name}'.";
         }
         catch (Exception ex)
         {
             return $"ERROR: {ex.Message}";
         }
     }
+
+    // =========================================================
+    // TYPE TEXT
+    // =========================================================
 
     public static string TypeText(
         string windowTitle,
@@ -201,7 +245,7 @@ public static class WindowsUiTools
                 }
                 catch
                 {
-                    // Continue with window focus.
+                    // Continue using focused window.
                 }
             }
 
@@ -222,30 +266,83 @@ public static class WindowsUiTools
         }
     }
 
+    // =========================================================
+    // FIND WINDOW
+    //
+    // "__FOREGROUND__" means:
+    // get whatever native window/dialog currently has focus.
+    // =========================================================
+
     private static AutomationElement? FindWindow(
         string partialTitle)
     {
-        AutomationElement root =
-            AutomationElement.RootElement;
-
-        AutomationElementCollection children =
-            root.FindAll(
-                TreeScope.Children,
-                Condition.TrueCondition
-            );
-
-        foreach (AutomationElement element in children)
+        if (string.Equals(
+            partialTitle,
+            "__FOREGROUND__",
+            StringComparison.OrdinalIgnoreCase))
         {
             try
             {
-                if (element.Current.ControlType !=
-                    ControlType.Window)
+                IntPtr hwnd =
+                    GetForegroundWindow();
+
+                if (hwnd == IntPtr.Zero)
+                {
+                    return null;
+                }
+
+                return AutomationElement.FromHandle(
+                    hwnd
+                );
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        AutomationElement root =
+            AutomationElement.RootElement;
+
+        AutomationElementCollection elements =
+            root.FindAll(
+                TreeScope.Children,
+                System.Windows.Automation.Condition.TrueCondition
+            );
+
+        // Exact match first.
+        foreach (AutomationElement element in elements)
+        {
+            try
+            {
+                string name =
+                    element.Current.Name ?? "";
+
+                if (string.Equals(
+                    name,
+                    partialTitle,
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    return element;
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        // Partial match second.
+        foreach (AutomationElement element in elements)
+        {
+            try
+            {
+                string name =
+                    element.Current.Name ?? "";
+
+                if (string.IsNullOrWhiteSpace(name))
                 {
                     continue;
                 }
-
-                string name =
-                    element.Current.Name;
 
                 if (name.Contains(
                     partialTitle,
@@ -256,33 +353,76 @@ public static class WindowsUiTools
             }
             catch
             {
-                // Ignore disappearing windows.
             }
         }
 
         return null;
     }
 
+    // =========================================================
+    // FIND EDITABLE CONTROL
+    // =========================================================
+
     private static AutomationElement? FindEditableControl(
         AutomationElement window)
     {
-        Condition condition =
-            new OrCondition(
-                new PropertyCondition(
-                    AutomationElement.ControlTypeProperty,
-                    ControlType.Edit
-                ),
-                new PropertyCondition(
-                    AutomationElement.ControlTypeProperty,
-                    ControlType.Document
-                )
-            );
+        try
+        {
+            System.Windows.Automation.Condition editableCondition =
+                new OrCondition(
+                    new PropertyCondition(
+                        AutomationElement.ControlTypeProperty,
+                        ControlType.Edit
+                    ),
+                    new PropertyCondition(
+                        AutomationElement.ControlTypeProperty,
+                        ControlType.Document
+                    )
+                );
 
-        return window.FindFirst(
-            TreeScope.Descendants,
-            condition
-        );
+            AutomationElement? directMatch =
+                window.FindFirst(
+                    TreeScope.Descendants,
+                    editableCondition
+                );
+
+            if (directMatch != null)
+            {
+                return directMatch;
+            }
+
+            AutomationElementCollection descendants =
+                window.FindAll(
+                    TreeScope.Descendants,
+                    System.Windows.Automation.Condition.TrueCondition
+                );
+
+            foreach (AutomationElement element in descendants)
+            {
+                try
+                {
+                    if (element.TryGetCurrentPattern(
+                        ValuePattern.Pattern,
+                        out _))
+                    {
+                        return element;
+                    }
+                }
+                catch
+                {
+                }
+            }
+        }
+        catch
+        {
+        }
+
+        return null;
     }
+
+    // =========================================================
+    // CTRL+V
+    // =========================================================
 
     private static void SendCtrlV()
     {
@@ -321,11 +461,18 @@ public static class WindowsUiTools
 
         if (sent != inputs.Length)
         {
+            int error =
+                Marshal.GetLastWin32Error();
+
             throw new InvalidOperationException(
-                "Ctrl+V SendInput failed."
+                $"Ctrl+V SendInput failed. Win32 error: {error}."
             );
         }
     }
+
+    // =========================================================
+    // CREATE KEYBOARD INPUT
+    // =========================================================
 
     private static INPUT CreateVirtualKeyInput(
         ushort virtualKey,
@@ -354,20 +501,15 @@ public static class WindowsUiTools
         };
     }
 
+    // =========================================================
+    // NATIVE STRUCTURES
+    // =========================================================
+
     private const uint INPUT_KEYBOARD =
         1;
 
     private const uint KEYEVENTF_KEYUP =
         0x0002;
-
-    [DllImport(
-        "user32.dll",
-        SetLastError = true)]
-    private static extern uint SendInput(
-        uint nInputs,
-        INPUT[] pInputs,
-        int cbSize
-    );
 
     [StructLayout(LayoutKind.Sequential)]
     private struct INPUT
