@@ -39,7 +39,6 @@ public partial class MainWindow : Window
             return;
         }
 
-        // Prevent more than one agent task running at once.
         if (_agentCancellation != null)
         {
             Log("A task is already running.");
@@ -140,43 +139,70 @@ public partial class MainWindow : Window
         object sender,
         RoutedEventArgs e)
     {
-        Log("Opening Notepad...");
+        try
+        {
+            Log("Opening Notepad...");
 
-        string result =
-            WindowsTools.OpenApplication(
-                "notepad"
+            string result =
+                WindowsTools.OpenApplication(
+                    "notepad"
+                );
+
+            Log(result);
+        }
+        catch (Exception ex)
+        {
+            Log(
+                $"OPEN NOTEPAD ERROR: {ex.Message}"
             );
-
-        Log(result);
+        }
     }
 
     private void CreateFile_Click(
         object sender,
         RoutedEventArgs e)
     {
-        Log("Creating test.txt...");
+        try
+        {
+            Log("Creating test.txt...");
 
-        string result =
-            WindowsTools.CreateDesktopFile(
-                "test.txt",
-                "Hello Aamir"
+            string result =
+                WindowsTools.CreateDesktopFile(
+                    "test.txt",
+                    "Hello Aamir"
+                );
+
+            Log(result);
+        }
+        catch (Exception ex)
+        {
+            Log(
+                $"CREATE FILE ERROR: {ex.Message}"
             );
-
-        Log(result);
+        }
     }
 
     private void VerifyFile_Click(
         object sender,
         RoutedEventArgs e)
     {
-        Log("Verifying test.txt...");
+        try
+        {
+            Log("Verifying test.txt...");
 
-        string result =
-            WindowsTools.DesktopFileExists(
-                "test.txt"
+            string result =
+                WindowsTools.DesktopFileExists(
+                    "test.txt"
+                );
+
+            Log(result);
+        }
+        catch (Exception ex)
+        {
+            Log(
+                $"VERIFY FILE ERROR: {ex.Message}"
             );
-
-        Log(result);
+        }
     }
 
     // =========================================================
@@ -334,13 +360,17 @@ public partial class MainWindow : Window
                         "Removed previous agent-test.txt."
                     );
                 }
-                catch (Exception ex)
+                catch (Exception deleteEx)
                 {
                     Log(
-                        $"WARNING: Could not remove existing test file: {ex.Message}"
+                        $"WARNING: Could not remove existing test file: {deleteEx.Message}"
                     );
                 }
             }
+
+            // -------------------------------------------------
+            // Open Notepad
+            // -------------------------------------------------
 
             string openResult =
                 WindowsTools.OpenApplication(
@@ -351,6 +381,10 @@ public partial class MainWindow : Window
 
             await Task.Delay(1500);
 
+            // -------------------------------------------------
+            // Focus Notepad
+            // -------------------------------------------------
+
             string focusResult =
                 WindowsUiTools.FocusWindow(
                     "Notepad"
@@ -359,6 +393,10 @@ public partial class MainWindow : Window
             Log(focusResult);
 
             await Task.Delay(300);
+
+            // -------------------------------------------------
+            // Type content
+            // -------------------------------------------------
 
             string typeResult =
                 WindowsUiTools.TypeText(
@@ -369,6 +407,10 @@ public partial class MainWindow : Window
             Log(typeResult);
 
             await Task.Delay(600);
+
+            // -------------------------------------------------
+            // Open Save As
+            // -------------------------------------------------
 
             Log(
                 "Opening Save As with CTRL+SHIFT+S..."
@@ -383,6 +425,10 @@ public partial class MainWindow : Window
 
             await Task.Delay(2000);
 
+            // -------------------------------------------------
+            // Select current filename
+            // -------------------------------------------------
+
             Log(
                 "Selecting existing filename..."
             );
@@ -396,11 +442,19 @@ public partial class MainWindow : Window
 
             await Task.Delay(300);
 
+            // -------------------------------------------------
+            // Copy target path
+            // -------------------------------------------------
+
             System.Windows.Clipboard.SetText(
                 targetPath
             );
 
             await Task.Delay(200);
+
+            // -------------------------------------------------
+            // Paste target path
+            // -------------------------------------------------
 
             Log(
                 "Entering target file path..."
@@ -415,6 +469,10 @@ public partial class MainWindow : Window
 
             await Task.Delay(500);
 
+            // -------------------------------------------------
+            // Save
+            // -------------------------------------------------
+
             Log(
                 "Pressing ENTER to save..."
             );
@@ -427,6 +485,10 @@ public partial class MainWindow : Window
             Log(enterResult);
 
             await Task.Delay(2000);
+
+            // -------------------------------------------------
+            // Verify
+            // -------------------------------------------------
 
             Log(
                 "Verifying saved file..."
@@ -468,6 +530,128 @@ public partial class MainWindow : Window
         {
             Log(
                 $"SAVE DIALOG TEST ERROR: {ex.Message}"
+            );
+        }
+    }
+
+    // =========================================================
+    // VERSION 0.6A
+    // BROWSER TEST
+    // =========================================================
+
+    private async void BrowserTest_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        try
+        {
+            Log("--------------------------------");
+            Log("Starting browser test...");
+
+            // -------------------------------------------------
+            // STEP 1
+            // Start Chromium
+            // -------------------------------------------------
+
+            Log("Starting Chromium...");
+
+            string startResult =
+                await BrowserTools.StartBrowserAsync();
+
+            Log(startResult);
+
+            if (startResult.StartsWith(
+                    "ERROR",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                Log(
+                    "Browser test stopped because Chromium could not start."
+                );
+
+                return;
+            }
+
+            // -------------------------------------------------
+            // STEP 2
+            // Navigate to example.com
+            // -------------------------------------------------
+
+            Log(
+                "Navigating to https://example.com..."
+            );
+
+            string navigateResult =
+                await BrowserTools.NavigateAsync(
+                    "https://example.com"
+                );
+
+            Log(navigateResult);
+
+            if (navigateResult.StartsWith(
+                    "ERROR",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                Log(
+                    "Browser test stopped because navigation failed."
+                );
+
+                return;
+            }
+
+            // -------------------------------------------------
+            // STEP 3
+            // Read page title and URL
+            // -------------------------------------------------
+
+            Log(
+                "Reading page information..."
+            );
+
+            string pageInfo =
+                await BrowserTools.GetPageInfoAsync();
+
+            Log(pageInfo);
+
+            // -------------------------------------------------
+            // STEP 4
+            // Read visible page text
+            // -------------------------------------------------
+
+            Log(
+                "Reading visible page text..."
+            );
+
+            string pageText =
+                await BrowserTools.ReadPageTextAsync();
+
+            Log(pageText);
+
+            // -------------------------------------------------
+            // STEP 5
+            // List links
+            // -------------------------------------------------
+
+            Log(
+                "Listing page links..."
+            );
+
+            string links =
+                await BrowserTools.ListLinksAsync();
+
+            Log(links);
+
+            // -------------------------------------------------
+            // COMPLETE
+            // -------------------------------------------------
+
+            Log(
+                "SUCCESS: Browser test completed."
+            );
+        }
+        catch (Exception ex)
+        {
+            Log(
+                $"BROWSER TEST ERROR: {ex.Message}"
             );
         }
     }
