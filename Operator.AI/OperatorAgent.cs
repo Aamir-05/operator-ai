@@ -16,14 +16,14 @@ public sealed class OperatorAgent
     private readonly ResponsesClient _client;
 
     // =========================================================
-    // WINDOWS APPLICATION TOOLS
+    // WINDOWS APPLICATION
     // =========================================================
 
     private static readonly FunctionTool OpenApplicationTool =
         ResponseTool.CreateFunctionTool(
             functionName: "open_application",
             functionDescription:
-                "Open an approved Windows application. Currently allowed applications include notepad, calculator, and edge.",
+                "Open an approved Windows application such as notepad, calculator, or edge.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -42,7 +42,7 @@ public sealed class OperatorAgent
         );
 
     // =========================================================
-    // DESKTOP FILE TOOLS
+    // DESKTOP FILES
     // =========================================================
 
     private static readonly FunctionTool CreateFolderTool =
@@ -71,7 +71,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "create_desktop_file",
             functionDescription:
-                "Create or overwrite a text file inside the Windows Desktop. relative_path may include subfolders.",
+                "Create or overwrite a text file under the Windows Desktop. relative_path may contain subfolders.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -99,7 +99,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "read_desktop_file",
             functionDescription:
-                "Read a text file located inside the Windows Desktop.",
+                "Read a text file located under the Windows Desktop.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -121,7 +121,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "desktop_file_exists",
             functionDescription:
-                "Check whether a file exists inside the Windows Desktop.",
+                "Check whether a file exists under the Windows Desktop.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -149,7 +149,7 @@ public sealed class OperatorAgent
         );
 
     // =========================================================
-    // WINDOWS UI TOOLS
+    // WINDOWS UI
     // =========================================================
 
     private static readonly FunctionTool ListWindowsTool =
@@ -209,7 +209,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "type_text",
             functionDescription:
-                "Type or paste text into the editable area of a visible Windows application window.",
+                "Type or paste text into the editable area of a visible Windows application.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -237,7 +237,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "press_key",
             functionDescription:
-                "Press a Windows keyboard key or shortcut. Examples include CTRL+S, CTRL+A, CTRL+SHIFT+S, ALT+F4, ENTER, TAB, ESC, LEFT, RIGHT, UP, and DOWN.",
+                "Press a Windows keyboard key or shortcut such as CTRL+S, CTRL+A, ALT+F4, ENTER, TAB, ESC, LEFT, RIGHT, UP, or DOWN.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -260,7 +260,7 @@ public sealed class OperatorAgent
             functionName:
                 "save_active_document_as_desktop_file",
             functionDescription:
-                "Reliably save the currently active Windows document to a file inside the Desktop.",
+                "Reliably save the currently active Windows document to a file under the Desktop.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -295,7 +295,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_session_info",
             functionDescription:
-                "Get browser session information including profile, current URL, title, and open tabs.",
+                "Get browser session information including current URL, title, persistent profile, and open tabs.",
             functionParameters: null,
             strictModeEnabled: false
         );
@@ -335,7 +335,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_read_page",
             functionDescription:
-                "Read visible text from the current browser page.",
+                "Read visible textual content from the current browser page.",
             functionParameters: null,
             strictModeEnabled: false
         );
@@ -344,7 +344,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_list_links",
             functionDescription:
-                "List links on the current browser page.",
+                "List links visible on the current browser page.",
             functionParameters: null,
             strictModeEnabled: false
         );
@@ -353,20 +353,20 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_list_elements",
             functionDescription:
-                "List interactive elements on the current webpage.",
+                "Inspect interactive elements on the current browser page.",
             functionParameters: null,
             strictModeEnabled: false
         );
 
     // =========================================================
-    // BROWSER GENERIC FIND
+    // GENERIC LOCATORS
     // =========================================================
 
     private static readonly FunctionTool BrowserFindTool =
         ResponseTool.CreateFunctionTool(
             functionName: "browser_find",
             functionDescription:
-                "Find webpage elements. Locator types: css, text, exact_text, label, placeholder, title, testid, alt.",
+                "Find webpage elements. Supported locator types: css, text, exact_text, label, placeholder, title, testid, alt.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -391,14 +391,14 @@ public sealed class OperatorAgent
         );
 
     // =========================================================
-    // VERSION 0.6E ROLE TOOLS
+    // ROLE-BASED TARGETING
     // =========================================================
 
     private static readonly FunctionTool BrowserRoleFindTool =
         ResponseTool.CreateFunctionTool(
             functionName: "browser_role_find",
             functionDescription:
-                "Find elements by ARIA role and accessible name. Examples of roles: button, link, textbox, searchbox, checkbox, radio, combobox, heading, dialog, tab, option.",
+                "Find elements by ARIA role and accessible name. Common roles include button, link, textbox, searchbox, checkbox, radio, combobox, heading, dialog, tab, option.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -430,7 +430,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_role_click",
             functionDescription:
-                "Click an element using its ARIA role and accessible name.",
+                "Click an element by ARIA role and accessible name.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -462,7 +462,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_role_fill",
             functionDescription:
-                "Fill a textbox, searchbox, or other editable browser element using its ARIA role and accessible name.",
+                "Fill an editable browser element using its ARIA role and accessible name.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -538,7 +538,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_role_get_text",
             functionDescription:
-                "Read text from an element identified by ARIA role and accessible name.",
+                "Read text from a browser element identified by ARIA role and accessible name.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -566,15 +566,11 @@ public sealed class OperatorAgent
             strictModeEnabled: true
         );
 
-    // =========================================================
-    // EXACT TEXT TOOL
-    // =========================================================
-
     private static readonly FunctionTool BrowserExactTextTool =
         ResponseTool.CreateFunctionTool(
             functionName: "browser_exact_text",
             functionDescription:
-                "Find an element whose visible text exactly matches the supplied text.",
+                "Find a browser element whose visible text exactly matches the supplied text.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -593,7 +589,44 @@ public sealed class OperatorAgent
         );
 
     // =========================================================
-    // SCREENSHOT TOOLS
+    // VERSION 0.6F
+    // VISUAL INSPECTION
+    // =========================================================
+
+    private static readonly FunctionTool BrowserVisualInspectTool =
+        ResponseTool.CreateFunctionTool(
+            functionName: "browser_visual_inspect",
+            functionDescription:
+                "Observe the current browser page visually using a screenshot and image understanding. Use this as a fallback when DOM, role, text, label, or other structured browser tools do not provide enough information. This tool only observes; it does not click or change the page.",
+            functionParameters: BinaryData.FromString(
+                """
+                {
+                  "type": "object",
+                  "properties": {
+                    "question": {
+                      "type": "string",
+                      "description":
+                        "What should be visually inspected or identified in the current browser screenshot."
+                    },
+                    "full_page": {
+                      "type": "boolean",
+                      "description":
+                        "True to capture the full scrollable page; false to inspect only the current viewport."
+                    }
+                  },
+                  "required": [
+                    "question",
+                    "full_page"
+                  ],
+                  "additionalProperties": false
+                }
+                """
+            ),
+            strictModeEnabled: true
+        );
+
+    // =========================================================
+    // SCREENSHOTS
     // =========================================================
 
     private static readonly FunctionTool BrowserScreenshotTool =
@@ -628,7 +661,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_list_screenshots",
             functionDescription:
-                "List screenshots captured by Operator AI under Desktop\\OperatorScreenshots.",
+                "List screenshots captured under Desktop\\OperatorScreenshots.",
             functionParameters: null,
             strictModeEnabled: false
         );
@@ -641,7 +674,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_get_text",
             functionDescription:
-                "Read text from the first matching browser element.",
+                "Read text from the first browser element matching a locator.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -701,7 +734,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_get_value",
             functionDescription:
-                "Read the current value of an input, textarea, or other compatible browser field.",
+                "Read the current value of an input or textarea.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -754,7 +787,7 @@ public sealed class OperatorAgent
         );
 
     // =========================================================
-    // WAIT TOOLS
+    // WAITING
     // =========================================================
 
     private static readonly FunctionTool BrowserWaitTool =
@@ -825,7 +858,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_wait_for_text",
             functionDescription:
-                "Wait for visible text to appear on the page.",
+                "Wait for visible text to appear on the browser page.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -854,7 +887,7 @@ public sealed class OperatorAgent
         );
 
     // =========================================================
-    // CLICK / FILL / TYPE / PRESS
+    // CLICK / FILL / TYPE / KEYBOARD
     // =========================================================
 
     private static readonly FunctionTool BrowserClickTool =
@@ -921,7 +954,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_type",
             functionDescription:
-                "Type text character-by-character into a browser field.",
+                "Type text character by character into a browser field.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -1004,14 +1037,14 @@ public sealed class OperatorAgent
         );
 
     // =========================================================
-    // SCROLL TOOLS
+    // SCROLLING
     // =========================================================
 
     private static readonly FunctionTool BrowserScrollTool =
         ResponseTool.CreateFunctionTool(
             functionName: "browser_scroll",
             functionDescription:
-                "Scroll the current page vertically. Positive values scroll down and negative values scroll up.",
+                "Scroll the current browser page vertically. Positive values scroll down and negative values scroll up.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -1033,7 +1066,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_scroll_to",
             functionDescription:
-                "Scroll the first matching browser element into view.",
+                "Scroll a matching browser element into view.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -1097,7 +1130,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_get_checked",
             functionDescription:
-                "Read whether a checkbox or radio element is currently checked.",
+                "Read whether a checkbox or radio control is currently checked.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -1129,7 +1162,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_select_option",
             functionDescription:
-                "Select an option from a standard HTML select. selection_type: value, label, or index.",
+                "Select an option from a standard HTML select control. selection_type may be value, label, or index.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -1169,7 +1202,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_upload_desktop_file",
             functionDescription:
-                "Upload a file located under the Windows Desktop to a webpage file input.",
+                "Upload a file located under the Windows Desktop into a webpage file input.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -1201,7 +1234,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_download",
             functionDescription:
-                "Click an element expected to trigger a download and save it under Desktop\\OperatorDownloads.",
+                "Click an element expected to trigger a download and save the resulting file under Desktop\\OperatorDownloads.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -1273,7 +1306,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_new_tab",
             functionDescription:
-                "Open a new browser tab. Pass an empty URL for a blank page.",
+                "Open a new browser tab. Pass an empty URL for a blank tab.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -1295,7 +1328,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_list_tabs",
             functionDescription:
-                "List open Operator AI browser tabs.",
+                "List currently open Operator AI browser tabs.",
             functionParameters: null,
             strictModeEnabled: false
         );
@@ -1304,7 +1337,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_switch_tab",
             functionDescription:
-                "Switch to a browser tab by its 1-based tab number.",
+                "Switch to a browser tab using its 1-based tab number.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -1326,7 +1359,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_close_tab",
             functionDescription:
-                "Close a browser tab by its 1-based tab number.",
+                "Close a browser tab using its 1-based tab number.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -1348,7 +1381,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "stop_browser",
             functionDescription:
-                "Close the Operator AI browser while retaining persistent browser session data.",
+                "Close the Operator AI Chromium browser while retaining persistent browser session data.",
             functionParameters: null,
             strictModeEnabled: false
         );
@@ -1379,7 +1412,7 @@ public sealed class OperatorAgent
     }
 
     // =========================================================
-    // RUN AGENT
+    // AGENT LOOP
     // =========================================================
 
     public async Task<string> RunAsync(
@@ -1407,8 +1440,9 @@ public sealed class OperatorAgent
                     cancellationToken
                 );
 
+        // Vision calls can add some latency.
         timeoutSource.CancelAfter(
-            TimeSpan.FromMinutes(8)
+            TimeSpan.FromMinutes(10)
         );
 
         CancellationToken token =
@@ -1417,7 +1451,7 @@ public sealed class OperatorAgent
         try
         {
             for (int step = 1;
-                 step <= 60;
+                 step <= 70;
                  step++)
             {
                 token.ThrowIfCancellationRequested();
@@ -1436,42 +1470,43 @@ public sealed class OperatorAgent
                             """
                             You are Operator AI, a Windows and browser automation agent.
 
-                            Complete the user's requested task using the tools available to you.
+                            Complete the user's requested task using the available tools.
 
                             =================================================
                             CORE RULES
                             =================================================
 
-                            - Use tools for real computer or browser actions.
-                            - Never claim an action succeeded unless tool output confirms it.
-                            - Verify important results whenever practical.
-                            - Never invent webpage contents, form state, files, URLs, or computer state.
-                            - Do not repeat a failed strategy indefinitely.
-                            - Prefer structured controls over fragile guessing.
+                            - Use tools for real computer and browser actions.
+                            - Never claim that an action succeeded unless a tool confirms it.
+                            - Verify important outcomes whenever practical.
+                            - Never invent webpage contents, controls, files, URLs, or computer state.
+                            - Do not repeat a failing strategy indefinitely.
+                            - Prefer deterministic structured automation over guesses.
 
                             =================================================
                             WINDOWS
                             =================================================
 
-                            - Use open_application for supported Windows apps.
-                            - Use list_windows to discover actual desktop window titles.
+                            - Use open_application for supported Windows applications.
+                            - Use list_windows when you need the actual window title.
                             - Use focus_window before desktop interaction when appropriate.
-                            - Use inspect_window when desktop state is uncertain.
+                            - Use inspect_window when desktop UI state is unclear.
                             - Use type_text for desktop text entry.
                             - Use press_key for Windows keyboard shortcuts.
-                            - Prefer save_active_document_as_desktop_file when saving active documents to Desktop.
+                            - Prefer save_active_document_as_desktop_file for reliable Desktop saving.
 
                             =================================================
                             BROWSER SESSION
                             =================================================
 
-                            - Browser automation uses a dedicated persistent Operator AI Chromium profile.
-                            - Cookies and website session state may survive browser restarts.
-                            - Never assume login state. Inspect the page when it matters.
-                            - Use browser_session_info if session information is useful.
+                            - Operator AI uses a dedicated persistent Chromium profile.
+                            - Cookies and site state may survive browser restarts.
+                            - Never assume the user is logged in.
+                            - Inspect the current page when authentication state matters.
+                            - Use browser_session_info when useful.
 
                             =================================================
-                            BROWSER TARGETING PRIORITY
+                            TARGETING PRIORITY
                             =================================================
 
                             Prefer browser targeting in this order when practical:
@@ -1482,21 +1517,19 @@ public sealed class OperatorAgent
                             4. exact visible text
                             5. testid
                             6. title or alt text
-                            7. stable CSS selector
+                            7. stable CSS
 
-                            Avoid complicated brittle CSS when a meaningful role,
-                            label, accessible name, or exact text exists.
+                            Avoid brittle complex CSS when semantic targeting exists.
 
                             =================================================
                             ROLE-BASED TARGETING
                             =================================================
 
-                            - Use browser_role_find to discover controls by semantic role.
-                            - Use browser_role_click for buttons, links, tabs, menu items,
-                              checkboxes, or similar interactive controls.
+                            - Use browser_role_find to identify semantic controls.
+                            - Use browser_role_click for buttons, links, tabs and similar controls.
                             - Use browser_role_fill for textboxes and searchboxes.
                             - Use browser_role_wait when a semantic control may appear later.
-                            - Use browser_role_get_text to read a semantically identified control.
+                            - Use browser_role_get_text for specific semantic text.
 
                             Typical roles include:
                             button
@@ -1512,92 +1545,115 @@ public sealed class OperatorAgent
                             option
 
                             =================================================
-                            EXACT TEXT
+                            VISUAL INSPECTION - VERSION 0.6F
                             =================================================
 
-                            - Use browser_exact_text when partial text matching could hit
-                              the wrong element.
-                            - Prefer exact text for buttons or links with short,
-                              distinctive visible labels.
+                            browser_visual_inspect visually analyzes a screenshot
+                            of the current browser page.
+
+                            IMPORTANT:
+                            - It is observation only.
+                            - It does not click, type, submit, or change anything.
+                            - Use structured DOM and role tools first when they are sufficient.
+                            - Use vision when the page is visually understandable but
+                              structured tools do not expose enough information.
+                            - Examples include custom dashboards, unusual controls,
+                              poorly accessible websites, popup placement, visual warnings,
+                              canvas-like content, or identifying what is blocking interaction.
+
+                            A good recovery pattern is:
+
+                            browser_list_elements
+                            -> browser_role_find / browser_find
+                            -> structured interaction
+
+                            If structured inspection is insufficient:
+                            -> browser_visual_inspect
+                            -> use its observations to choose a structured locator or strategy
+                            -> verify with DOM/role/page tools
+
+                            Do not treat an approximate visual position as proof that a
+                            structured locator points to that element.
+
+                            Do not claim that visual inspection performed an action.
+
+                            Avoid visual inspection on pages visibly containing passwords,
+                            payment-card details, authentication secrets, private messages,
+                            confidential documents, or similarly sensitive information
+                            unless the user explicitly requested visual analysis of that page.
 
                             =================================================
-                            PAGE READING / INSPECTION
+                            PAGE INSPECTION
                             =================================================
 
-                            - Use browser_get_page_info to confirm title and URL.
-                            - Use browser_read_page for broad visible page contents.
-                            - Use browser_list_elements when the interactive structure is unclear.
-                            - Use browser_get_text for a specific element's text.
-                            - Use browser_get_attribute for attributes such as href,
-                              aria-label, title, data-* values, and similar metadata.
-                            - Use browser_get_value to verify text field values.
-                            - Use browser_is_visible for an immediate visibility check.
+                            - Use browser_get_page_info for title and URL.
+                            - Use browser_read_page for broad visible text.
+                            - Use browser_list_elements to inspect the interactive structure.
+                            - Use browser_get_text for a specific element.
+                            - Use browser_get_attribute for attributes such as href or aria-label.
+                            - Use browser_get_value to verify form values.
+                            - Use browser_is_visible for immediate visibility checks.
 
                             =================================================
                             SCREENSHOTS
                             =================================================
 
-                            - Use browser_screenshot when a visual record is useful
-                              or the user explicitly asks for a screenshot.
-                            - Screenshots are saved under Desktop\OperatorScreenshots.
-                            - Use browser_list_screenshots to verify screenshot creation.
-                            - A screenshot confirms an image was captured but does not
-                              automatically mean its visual contents were interpreted.
+                            - Use browser_screenshot when the user asks for a screenshot
+                              or when a persistent visual record is useful.
+                            - Screenshots are stored under Desktop\OperatorScreenshots.
+                            - browser_visual_inspect automatically captures its own screenshot.
+                            - A screenshot being created does not by itself mean its
+                              visual content has been understood.
 
                             =================================================
                             WAITING
                             =================================================
 
-                            - Use browser_wait for a generic element state.
-                            - Use browser_role_wait when a semantic control is expected.
-                            - Use browser_wait_for_url after actions that should navigate.
-                            - Use browser_wait_for_text for dynamically appearing text.
-                            - Prefer meaningful waits to blind retries.
-                            - Do not use repeated arbitrary delays when a specific state
-                              can be waited for.
-
-                            =================================================
-                            SCROLLING
-                            =================================================
-
-                            - Use browser_scroll when moving through a long page.
-                            - Positive delta scrolls downward.
-                            - Negative delta scrolls upward.
-                            - Use browser_scroll_to when a known element should be brought
-                              into view before interacting with it.
+                            - Use browser_wait for generic element state.
+                            - Use browser_role_wait for semantic controls.
+                            - Use browser_wait_for_url after navigation when useful.
+                            - Use browser_wait_for_text for dynamic content.
+                            - Prefer waiting for an explicit state rather than blind retries.
 
                             =================================================
                             FORMS
                             =================================================
 
-                            - Use browser_fill for generic form inputs.
-                            - Prefer browser_role_fill when an accessible textbox/searchbox
-                              name is known.
-                            - Use browser_get_value to verify entered text when useful.
-                            - Use browser_set_checked for checkbox/radio state.
-                            - Use browser_get_checked to verify checkbox/radio state.
-                            - Use browser_select_option for standard HTML select controls.
-                            - Use browser_press for element-specific Enter, Tab or Escape.
+                            - Prefer browser_role_fill when an accessible textbox name is known.
+                            - Otherwise use browser_fill.
+                            - Use browser_get_value to verify text input.
+                            - Use browser_set_checked and browser_get_checked for checkbox/radio state.
+                            - Use browser_select_option for standard HTML select elements.
+                            - Use browser_press for element-specific Enter, Tab, Escape, etc.
+
+                            =================================================
+                            SCROLLING
+                            =================================================
+
+                            - Use browser_scroll to move vertically through a long page.
+                            - Positive values scroll downward.
+                            - Negative values scroll upward.
+                            - Use browser_scroll_to when a known element should be brought into view.
 
                             =================================================
                             FILES
                             =================================================
 
-                            - browser_upload_desktop_file may upload only files under Desktop.
+                            - browser_upload_desktop_file can upload only files under Desktop.
                             - Never invent a filename.
-                            - browser_download stores files under Desktop\OperatorDownloads.
-                            - Use browser_list_downloads for additional verification.
+                            - browser_download stores downloads under Desktop\OperatorDownloads.
+                            - Use browser_list_downloads when additional verification is useful.
 
                             =================================================
-                            NAVIGATION / TABS
+                            NAVIGATION
                             =================================================
 
-                            - Use start_browser before browser work if necessary.
-                            - Use browser_navigate to visit a URL.
-                            - Use browser_back, browser_forward, and browser_reload as needed.
-                            - Use browser_new_tab when another independent page is useful.
-                            - Use browser_list_tabs before switching when tab numbers are uncertain.
-                            - Use browser_switch_tab to change the active tab.
+                            - Use start_browser before browser work when necessary.
+                            - Use browser_navigate to visit URLs.
+                            - Use browser_back, browser_forward, and browser_reload when appropriate.
+                            - Use browser_new_tab for a separate page.
+                            - Use browser_list_tabs when tab numbers are uncertain.
+                            - Use browser_switch_tab to change tabs.
                             - Avoid unnecessary tabs.
 
                             =================================================
@@ -1606,33 +1662,32 @@ public sealed class OperatorAgent
 
                             ERROR, NOT_FOUND and BLOCKED mean the attempted strategy failed.
 
-                            If a locator fails:
+                            When a locator fails:
                             - inspect browser_list_elements,
-                            - try browser_role_find,
-                            - try label/placeholder/exact text,
-                            - or use a stable CSS locator.
+                            - try role targeting,
+                            - try label, placeholder, exact text, testid,
+                            - then use stable CSS if necessary.
 
-                            If an action causes navigation:
-                            - verify using browser_wait_for_url or browser_get_page_info.
+                            When structured inspection cannot explain the visible page:
+                            - use browser_visual_inspect.
 
-                            If content appears dynamically:
-                            - use browser_wait_for_text or browser_wait/browser_role_wait.
+                            After visual inspection:
+                            - return to structured browser tools for actual interaction
+                              whenever possible.
 
-                            Never repeatedly issue the exact same failing tool call.
-                            Change the strategy or arguments.
+                            Do not repeatedly issue the exact same failing tool call.
 
                             =================================================
                             CONSEQUENTIAL ACTIONS
                             =================================================
 
-                            Browsing, searching, reading, form preparation,
-                            screenshots, ordinary uploads and downloads may proceed
-                            when they are part of the user's request.
+                            Reading, browsing, research, screenshots, ordinary form
+                            preparation, uploads and downloads may proceed when requested.
 
                             Do not finalize purchases, financial transactions,
                             account deletion, password changes, final legal submissions,
-                            or similarly consequential actions unless the user's
-                            instruction clearly authorizes that exact final action.
+                            or similarly consequential actions unless the user's request
+                            clearly authorizes that exact final action.
 
                             =================================================
                             COMPLETION
@@ -1641,25 +1696,27 @@ public sealed class OperatorAgent
                             Do not declare completion until the requested outcome
                             has been reasonably verified.
 
-                            For browser tasks:
-                            - verify final URL or visible state where practical.
+                            For browser navigation:
+                            verify page title, URL, or visible state.
 
-                            For form tasks:
-                            - verify entered values/state where practical.
+                            For form input:
+                            verify field values or state where practical.
 
                             For downloads:
-                            - verify the resulting file.
+                            verify the resulting file.
 
                             For screenshots:
-                            - verify screenshot creation.
+                            verify creation.
 
-                            If the task cannot be completed, explain exactly
-                            which step remains unresolved.
+                            For visually identified information:
+                            distinguish visual observations from verified DOM facts.
+
+                            If completion is impossible, clearly explain the unresolved step.
                             """
                     };
 
                 // =================================================
-                // WINDOWS TOOLS
+                // WINDOWS
                 // =================================================
 
                 options.Tools.Add(OpenApplicationTool);
@@ -1689,7 +1746,7 @@ public sealed class OperatorAgent
                 options.Tools.Add(BrowserFindTool);
 
                 // =================================================
-                // 0.6E TARGETING
+                // SEMANTIC TARGETING
                 // =================================================
 
                 options.Tools.Add(BrowserRoleFindTool);
@@ -1700,7 +1757,13 @@ public sealed class OperatorAgent
                 options.Tools.Add(BrowserExactTextTool);
 
                 // =================================================
-                // 0.6E SCREENSHOT / INSPECTION
+                // 0.6F VISION
+                // =================================================
+
+                options.Tools.Add(BrowserVisualInspectTool);
+
+                // =================================================
+                // SCREENSHOTS / INSPECTION
                 // =================================================
 
                 options.Tools.Add(BrowserScreenshotTool);
@@ -1717,16 +1780,18 @@ public sealed class OperatorAgent
                 options.Tools.Add(BrowserWaitTool);
                 options.Tools.Add(BrowserWaitForUrlTool);
                 options.Tools.Add(BrowserWaitForTextTool);
+
                 options.Tools.Add(BrowserClickTool);
                 options.Tools.Add(BrowserFillTool);
                 options.Tools.Add(BrowserTypeTool);
                 options.Tools.Add(BrowserPressTool);
                 options.Tools.Add(BrowserPageKeyTool);
+
                 options.Tools.Add(BrowserScrollTool);
                 options.Tools.Add(BrowserScrollToTool);
 
                 // =================================================
-                // FORMS / FILES
+                // FORM / FILE
                 // =================================================
 
                 options.Tools.Add(BrowserSetCheckedTool);
@@ -1750,7 +1815,7 @@ public sealed class OperatorAgent
                 options.Tools.Add(StopBrowserTool);
 
                 // =================================================
-                // CALL MODEL
+                // MODEL
                 // =================================================
 
                 ResponseResult response =
@@ -1805,7 +1870,8 @@ public sealed class OperatorAgent
 
                         result =
                             await ExecuteToolAsync(
-                                functionCall
+                                functionCall,
+                                token
                             );
                     }
 
@@ -1896,7 +1962,7 @@ public sealed class OperatorAgent
             }
 
             string timeoutMessage =
-                "TIMEOUT: Task exceeded the 8-minute limit and was stopped.";
+                "TIMEOUT: Task exceeded the 10-minute limit and was stopped.";
 
             log?.Invoke(
                 $"[TIMEOUT] {timeoutMessage}"
@@ -1920,11 +1986,12 @@ public sealed class OperatorAgent
     }
 
     // =========================================================
-    // EXECUTE TOOL
+    // TOOL EXECUTION
     // =========================================================
 
     private static async Task<string> ExecuteToolAsync(
-        FunctionCallResponseItem call)
+        FunctionCallResponseItem call,
+        CancellationToken cancellationToken)
     {
         JsonElement arguments;
 
@@ -2157,7 +2224,7 @@ public sealed class OperatorAgent
                 }
 
             // =================================================
-            // ROLE TOOLS
+            // ROLE TARGETING
             // =================================================
 
             case "browser_role_find":
@@ -2280,7 +2347,34 @@ public sealed class OperatorAgent
                 }
 
             // =================================================
-            // SCREENSHOTS
+            // 0.6F VISUAL INSPECTION
+            // =================================================
+
+            case "browser_visual_inspect":
+                {
+                    string question =
+                        GetStringArgument(
+                            arguments,
+                            "question"
+                        );
+
+                    bool fullPage =
+                        GetBoolArgument(
+                            arguments,
+                            "full_page"
+                        );
+
+                    return
+                        await BrowserVisionTools
+                            .InspectCurrentPageAsync(
+                                question,
+                                fullPage,
+                                cancellationToken
+                            );
+                }
+
+            // =================================================
+            // SCREENSHOT
             // =================================================
 
             case "browser_screenshot":
@@ -2434,7 +2528,7 @@ public sealed class OperatorAgent
                 }
 
             // =================================================
-            // CLICK / FILL / TYPE / KEY
+            // INPUT
             // =================================================
 
             case "browser_click":
@@ -2551,7 +2645,7 @@ public sealed class OperatorAgent
                 }
 
             // =================================================
-            // CHECKBOX
+            // CHECKBOX / RADIO
             // =================================================
 
             case "browser_set_checked":
@@ -2810,12 +2904,16 @@ public sealed class OperatorAgent
                 return 0;
             }
 
-            if (value.ValueKind ==
-                JsonValueKind.Number &&
+            if (
+                value.ValueKind ==
+                JsonValueKind.Number
+                &&
                 value.TryGetInt32(
-                    out int result))
+                    out int result)
+            )
             {
-                return result;
+                return
+                    result;
             }
 
             return 0;
