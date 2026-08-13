@@ -1,5 +1,6 @@
 ﻿using Microsoft.Playwright;
 using System;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -7,10 +8,58 @@ namespace Operator.Tools;
 
 public static class BrowserTools
 {
+    // =========================================================
+    // BROWSER STATE
+    // =========================================================
+
     private static IPlaywright? _playwright;
-    private static IBrowser? _browser;
     private static IBrowserContext? _context;
     private static IPage? _page;
+
+    // =========================================================
+    // PERSISTENT PROFILE
+    // =========================================================
+
+    private static readonly string PersistentProfileDirectory =
+        Path.Combine(
+            Environment.GetFolderPath(
+                Environment.SpecialFolder.LocalApplicationData
+            ),
+            "OperatorAI",
+            "BrowserProfile"
+        );
+
+    // =========================================================
+    // DOWNLOAD DIRECTORY
+    //
+    // Browser downloads are kept in one predictable location.
+    // =========================================================
+
+    private static readonly string DownloadsDirectory =
+        Path.Combine(
+            Environment.GetFolderPath(
+                Environment.SpecialFolder.DesktopDirectory
+            ),
+            "OperatorDownloads"
+        );
+
+    // =========================================================
+    // GET PROFILE PATH
+    // =========================================================
+
+    public static string GetPersistentProfilePath()
+    {
+        return PersistentProfileDirectory;
+    }
+
+    // =========================================================
+    // GET DOWNLOAD PATH
+    // =========================================================
+
+    public static string GetDownloadsDirectory()
+    {
+        return DownloadsDirectory;
+    }
 
     // =========================================================
     // START BROWSER
@@ -20,55 +69,164 @@ public static class BrowserTools
     {
         try
         {
-            if (_browser != null &&
-                _browser.IsConnected &&
-                _page != null)
+            if (IsBrowserRunning())
             {
+                await EnsureCurrentPageAsync();
+
                 return
-                    "SUCCESS: Browser is already running.";
+                    "SUCCESS: Persistent Operator AI browser is already running.";
             }
+
+            // -------------------------------------------------
+            // Clear stale references
+            // -------------------------------------------------
+
+            _page = null;
+            _context = null;
+
+            if (_playwright != null)
+            {
+                try
+                {
+                    _playwright.Dispose();
+                }
+                catch
+                {
+                }
+
+                _playwright = null;
+            }
+
+            // -------------------------------------------------
+            // Ensure directories exist
+            // -------------------------------------------------
+
+            Directory.CreateDirectory(
+                PersistentProfileDirectory
+            );
+
+            Directory.CreateDirectory(
+                DownloadsDirectory
+            );
+
+            // -------------------------------------------------
+            // Start Playwright
+            // -------------------------------------------------
 
             _playwright =
                 await Playwright.CreateAsync();
 
-            _browser =
+            // -------------------------------------------------
+            // Launch persistent Chromium
+            // -------------------------------------------------
+
+            _context =
                 await _playwright
                     .Chromium
-                    .LaunchAsync(
-                        new BrowserTypeLaunchOptions
+                    .LaunchPersistentContextAsync(
+                        PersistentProfileDirectory,
+                        new BrowserTypeLaunchPersistentContextOptions
                         {
                             Headless = false,
-                            SlowMo = 80
+
+                            SlowMo = 80,
+
+                            AcceptDownloads = true,
+
+                            Timeout = 30000,
+
+                            ViewportSize =
+                                new ViewportSize
+                                {
+                                    Width = 1400,
+                                    Height = 900
+                                }
                         }
                     );
 
-            _context =
-                await _browser.NewContextAsync(
-                    new BrowserNewContextOptions
-                    {
-                        ViewportSize =
-                            new ViewportSize
-                            {
-                                Width = 1400,
-                                Height = 900
-                            }
-                    }
-                );
+            // -------------------------------------------------
+            // Use existing page if Chromium created one
+            // -------------------------------------------------
 
-            _page =
-                await _context.NewPageAsync();
+            if (_context.Pages.Count > 0)
+            {
+                _page =
+                    _context.Pages[
+                        _context.Pages.Count - 1
+                    ];
+            }
+            else
+            {
+                _page =
+                    await _context.NewPageAsync();
+            }
 
-            _page.SetDefaultTimeout(
-                15000
+            ConfigurePage(
+                _page
             );
 
+            await _page.BringToFrontAsync();
+
             return
-                "SUCCESS: Chromium browser started.";
+                "SUCCESS: Chromium browser started with persistent Operator AI profile.\n" +
+                $"Profile: {PersistentProfileDirectory}\n" +
+                $"Downloads: {DownloadsDirectory}";
         }
         catch (Exception ex)
         {
             return
-                $"ERROR: Could not start browser: {ex.Message}";
+                "ERROR: Could not start persistent browser. " +
+                $"{ex.Message}\n" +
+                "Close any existing Operator AI Chromium window and try again.";
+        }
+    }
+
+    // =========================================================
+    // SESSION INFORMATION
+    // =========================================================
+
+    public static async Task<string> GetSessionInfoAsync()
+    {
+        try
+        {
+            if (!IsBrowserRunning())
+            {
+                return
+                    "BROWSER SESSION\n" +
+                    "Status: Not running\n" +
+                    $"Persistent profile: {PersistentProfileDirectory}\n" +
+                    $"Downloads: {DownloadsDirectory}";
+            }
+
+            await EnsureCurrentPageAsync();
+
+            string title = "";
+
+            if (_page != null)
+            {
+                try
+                {
+                    title =
+                        await _page.TitleAsync();
+                }
+                catch
+                {
+                }
+            }
+
+            return
+                "BROWSER SESSION\n" +
+                "Status: Running\n" +
+                $"Persistent profile: {PersistentProfileDirectory}\n" +
+                $"Downloads: {DownloadsDirectory}\n" +
+                $"Open tabs: {_context!.Pages.Count}\n" +
+                $"Current title: {title}\n" +
+                $"Current URL: {_page?.Url}";
+        }
+        catch (Exception ex)
+        {
+            return
+                $"ERROR: Could not read browser session information: {ex.Message}";
         }
     }
 
@@ -95,8 +253,12 @@ public static class BrowserTools
                     "ERROR: URL cannot be empty.";
             }
 
+            await EnsureCurrentPageAsync();
+
             url =
-                NormalizeUrl(url);
+                NormalizeUrl(
+                    url
+                );
 
             await _page!.GotoAsync(
                 url,
@@ -104,7 +266,9 @@ public static class BrowserTools
                 {
                     WaitUntil =
                         WaitUntilState.DOMContentLoaded,
-                    Timeout = 30000
+
+                    Timeout =
+                        30000
                 }
             );
 
@@ -119,13 +283,21 @@ public static class BrowserTools
     }
 
     // =========================================================
-    // PAGE INFORMATION
+    // GET PAGE INFORMATION
     // =========================================================
 
     public static async Task<string> GetPageInfoAsync()
     {
         try
         {
+            if (!IsBrowserRunning())
+            {
+                return
+                    "ERROR: Browser is not running.";
+            }
+
+            await EnsureCurrentPageAsync();
+
             if (_page == null)
             {
                 return
@@ -155,6 +327,14 @@ public static class BrowserTools
     {
         try
         {
+            if (!IsBrowserRunning())
+            {
+                return
+                    "ERROR: Browser is not running.";
+            }
+
+            await EnsureCurrentPageAsync();
+
             if (_page == null)
             {
                 return
@@ -195,6 +375,14 @@ public static class BrowserTools
     {
         try
         {
+            if (!IsBrowserRunning())
+            {
+                return
+                    "ERROR: Browser is not running.";
+            }
+
+            await EnsureCurrentPageAsync();
+
             if (_page == null)
             {
                 return
@@ -202,7 +390,9 @@ public static class BrowserTools
             }
 
             ILocator links =
-                _page.Locator("a");
+                _page.Locator(
+                    "a"
+                );
 
             int count =
                 await links.CountAsync();
@@ -260,7 +450,6 @@ public static class BrowserTools
                 }
                 catch
                 {
-                    // Ignore disappearing links.
                 }
             }
 
@@ -288,6 +477,14 @@ public static class BrowserTools
     {
         try
         {
+            if (!IsBrowserRunning())
+            {
+                return
+                    "ERROR: Browser is not running.";
+            }
+
+            await EnsureCurrentPageAsync();
+
             if (_page == null)
             {
                 return
@@ -394,7 +591,6 @@ public static class BrowserTools
                 }
                 catch
                 {
-                    // Ignore elements that disappear.
                 }
             }
 
@@ -424,11 +620,13 @@ public static class BrowserTools
     {
         try
         {
-            if (_page == null)
+            if (!IsBrowserRunning())
             {
                 return
-                    "ERROR: No browser page is currently open.";
+                    "ERROR: Browser is not running.";
             }
+
+            await EnsureCurrentPageAsync();
 
             ILocator locator =
                 ResolveLocator(
@@ -523,6 +721,72 @@ public static class BrowserTools
     }
 
     // =========================================================
+    // WAIT FOR ELEMENT
+    //
+    // state:
+    // visible
+    // hidden
+    // attached
+    // detached
+    // =========================================================
+
+    public static async Task<string> WaitForElementAsync(
+        string locatorType,
+        string query,
+        string state,
+        int timeoutSeconds)
+    {
+        try
+        {
+            if (!IsBrowserRunning())
+            {
+                return
+                    "ERROR: Browser is not running.";
+            }
+
+            await EnsureCurrentPageAsync();
+
+            ILocator locator =
+                ResolveLocator(
+                    locatorType,
+                    query
+                );
+
+            WaitForSelectorState waitState =
+                ParseWaitState(
+                    state
+                );
+
+            int safeTimeoutSeconds =
+                Math.Clamp(
+                    timeoutSeconds,
+                    1,
+                    120
+                );
+
+            await locator.WaitForAsync(
+                new LocatorWaitForOptions
+                {
+                    State =
+                        waitState,
+
+                    Timeout =
+                        safeTimeoutSeconds
+                        * 1000
+                }
+            );
+
+            return
+                $"SUCCESS: Browser element {locatorType}='{query}' reached state '{state}' within {safeTimeoutSeconds} seconds.";
+        }
+        catch (Exception ex)
+        {
+            return
+                $"ERROR: Wait for browser element failed: {ex.Message}";
+        }
+    }
+
+    // =========================================================
     // CLICK
     // =========================================================
 
@@ -532,11 +796,13 @@ public static class BrowserTools
     {
         try
         {
-            if (_page == null)
+            if (!IsBrowserRunning())
             {
                 return
-                    "ERROR: No browser page is currently open.";
+                    "ERROR: Browser is not running.";
             }
+
+            await EnsureCurrentPageAsync();
 
             ILocator locator =
                 ResolveLocator(
@@ -553,10 +819,9 @@ public static class BrowserTools
                     $"NOT_FOUND: Could not find browser element {locatorType}='{query}'.";
             }
 
-            ILocator target =
-                locator.Nth(0);
-
-            await target.ClickAsync();
+            await locator
+                .Nth(0)
+                .ClickAsync();
 
             return
                 $"SUCCESS: Clicked browser element {locatorType}='{query}'.";
@@ -570,7 +835,6 @@ public static class BrowserTools
 
     // =========================================================
     // FILL
-    // Replaces existing field contents.
     // =========================================================
 
     public static async Task<string> FillAsync(
@@ -580,11 +844,13 @@ public static class BrowserTools
     {
         try
         {
-            if (_page == null)
+            if (!IsBrowserRunning())
             {
                 return
-                    "ERROR: No browser page is currently open.";
+                    "ERROR: Browser is not running.";
             }
+
+            await EnsureCurrentPageAsync();
 
             ILocator locator =
                 ResolveLocator(
@@ -619,7 +885,6 @@ public static class BrowserTools
 
     // =========================================================
     // TYPE
-    // Types characters sequentially like a user.
     // =========================================================
 
     public static async Task<string> TypeAsync(
@@ -629,11 +894,13 @@ public static class BrowserTools
     {
         try
         {
-            if (_page == null)
+            if (!IsBrowserRunning())
             {
                 return
-                    "ERROR: No browser page is currently open.";
+                    "ERROR: Browser is not running.";
             }
+
+            await EnsureCurrentPageAsync();
 
             ILocator locator =
                 ResolveLocator(
@@ -681,11 +948,13 @@ public static class BrowserTools
     {
         try
         {
-            if (_page == null)
+            if (!IsBrowserRunning())
             {
                 return
-                    "ERROR: No browser page is currently open.";
+                    "ERROR: Browser is not running.";
             }
+
+            await EnsureCurrentPageAsync();
 
             ILocator locator =
                 ResolveLocator(
@@ -719,7 +988,7 @@ public static class BrowserTools
     }
 
     // =========================================================
-    // PRESS GLOBAL PAGE KEY
+    // PRESS PAGE KEY
     // =========================================================
 
     public static async Task<string> PressPageKeyAsync(
@@ -727,6 +996,14 @@ public static class BrowserTools
     {
         try
         {
+            if (!IsBrowserRunning())
+            {
+                return
+                    "ERROR: Browser is not running.";
+            }
+
+            await EnsureCurrentPageAsync();
+
             if (_page == null)
             {
                 return
@@ -748,6 +1025,462 @@ public static class BrowserTools
     }
 
     // =========================================================
+    // SET CHECKBOX / RADIO STATE
+    // =========================================================
+
+    public static async Task<string> SetCheckedAsync(
+        string locatorType,
+        string query,
+        bool checkedState)
+    {
+        try
+        {
+            if (!IsBrowserRunning())
+            {
+                return
+                    "ERROR: Browser is not running.";
+            }
+
+            await EnsureCurrentPageAsync();
+
+            ILocator locator =
+                ResolveLocator(
+                    locatorType,
+                    query
+                );
+
+            int count =
+                await locator.CountAsync();
+
+            if (count == 0)
+            {
+                return
+                    $"NOT_FOUND: Could not find checkbox/radio {locatorType}='{query}'.";
+            }
+
+            ILocator target =
+                locator.Nth(0);
+
+            await target.SetCheckedAsync(
+                checkedState
+            );
+
+            bool actualState =
+                await target.IsCheckedAsync();
+
+            if (actualState != checkedState)
+            {
+                return
+                    $"ERROR: Requested checked state '{checkedState}' was not confirmed.";
+            }
+
+            return
+                $"SUCCESS: Set {locatorType}='{query}' checked={actualState}.";
+        }
+        catch (Exception ex)
+        {
+            return
+                $"ERROR: Browser checkbox/radio operation failed: {ex.Message}";
+        }
+    }
+
+    // =========================================================
+    // GET CHECKBOX STATE
+    // =========================================================
+
+    public static async Task<string> GetCheckedStateAsync(
+        string locatorType,
+        string query)
+    {
+        try
+        {
+            if (!IsBrowserRunning())
+            {
+                return
+                    "ERROR: Browser is not running.";
+            }
+
+            await EnsureCurrentPageAsync();
+
+            ILocator locator =
+                ResolveLocator(
+                    locatorType,
+                    query
+                );
+
+            int count =
+                await locator.CountAsync();
+
+            if (count == 0)
+            {
+                return
+                    $"NOT_FOUND: Could not find checkbox/radio {locatorType}='{query}'.";
+            }
+
+            bool state =
+                await locator
+                    .Nth(0)
+                    .IsCheckedAsync();
+
+            return
+                $"SUCCESS: {locatorType}='{query}' checked={state}.";
+        }
+        catch (Exception ex)
+        {
+            return
+                $"ERROR: Could not read checkbox/radio state: {ex.Message}";
+        }
+    }
+
+    // =========================================================
+    // SELECT DROPDOWN OPTION
+    //
+    // selectionType:
+    // value
+    // label
+    // index
+    // =========================================================
+
+    public static async Task<string> SelectOptionAsync(
+        string locatorType,
+        string query,
+        string selectionType,
+        string selection)
+    {
+        try
+        {
+            if (!IsBrowserRunning())
+            {
+                return
+                    "ERROR: Browser is not running.";
+            }
+
+            await EnsureCurrentPageAsync();
+
+            ILocator locator =
+                ResolveLocator(
+                    locatorType,
+                    query
+                );
+
+            int count =
+                await locator.CountAsync();
+
+            if (count == 0)
+            {
+                return
+                    $"NOT_FOUND: Could not find select element {locatorType}='{query}'.";
+            }
+
+            SelectOptionValue option =
+                BuildSelectOption(
+                    selectionType,
+                    selection
+                );
+
+            IReadOnlyList<string> selected =
+                await locator
+                    .Nth(0)
+                    .SelectOptionAsync(
+                        new[]
+                        {
+                            option
+                        }
+                    );
+
+            if (selected.Count == 0)
+            {
+                return
+                    $"ERROR: Dropdown option '{selection}' was not selected.";
+            }
+
+            return
+                "SUCCESS: Selected dropdown option. " +
+                $"Requested {selectionType}='{selection}'. " +
+                $"Selected value(s): {string.Join(", ", selected)}";
+        }
+        catch (Exception ex)
+        {
+            return
+                $"ERROR: Browser dropdown selection failed: {ex.Message}";
+        }
+    }
+
+    // =========================================================
+    // UPLOAD DESKTOP FILE
+    //
+    // Security boundary:
+    // upload source must be inside Desktop.
+    // =========================================================
+
+    public static async Task<string> UploadDesktopFileAsync(
+        string locatorType,
+        string query,
+        string relativePath)
+    {
+        try
+        {
+            if (!IsBrowserRunning())
+            {
+                return
+                    "ERROR: Browser is not running.";
+            }
+
+            await EnsureCurrentPageAsync();
+
+            string desktop =
+                Environment.GetFolderPath(
+                    Environment.SpecialFolder.DesktopDirectory
+                );
+
+            string filePath =
+                ResolvePathInsideRoot(
+                    desktop,
+                    relativePath
+                );
+
+            if (!File.Exists(filePath))
+            {
+                return
+                    $"NOT_FOUND: Upload file does not exist: {filePath}";
+            }
+
+            ILocator locator =
+                ResolveLocator(
+                    locatorType,
+                    query
+                );
+
+            int count =
+                await locator.CountAsync();
+
+            if (count == 0)
+            {
+                return
+                    $"NOT_FOUND: Could not find file upload input {locatorType}='{query}'.";
+            }
+
+            await locator
+                .Nth(0)
+                .SetInputFilesAsync(
+                    filePath
+                );
+
+            return
+                $"SUCCESS: Uploaded Desktop file '{filePath}' into {locatorType}='{query}'.";
+        }
+        catch (Exception ex)
+        {
+            return
+                $"ERROR: Browser file upload failed: {ex.Message}";
+        }
+    }
+
+    // =========================================================
+    // DOWNLOAD BY CLICK
+    //
+    // Downloads are always saved under:
+    // Desktop\OperatorDownloads
+    //
+    // preferredRelativePath may be:
+    // ""
+    // report.pdf
+    // Reports\report.pdf
+    // =========================================================
+
+    public static async Task<string> DownloadByClickAsync(
+        string locatorType,
+        string query,
+        string preferredRelativePath)
+    {
+        try
+        {
+            if (!IsBrowserRunning())
+            {
+                return
+                    "ERROR: Browser is not running.";
+            }
+
+            await EnsureCurrentPageAsync();
+
+            if (_page == null)
+            {
+                return
+                    "ERROR: No browser page is currently open.";
+            }
+
+            Directory.CreateDirectory(
+                DownloadsDirectory
+            );
+
+            ILocator locator =
+                ResolveLocator(
+                    locatorType,
+                    query
+                );
+
+            int count =
+                await locator.CountAsync();
+
+            if (count == 0)
+            {
+                return
+                    $"NOT_FOUND: Could not find download element {locatorType}='{query}'.";
+            }
+
+            // -------------------------------------------------
+            // Begin waiting BEFORE click
+            // -------------------------------------------------
+
+            Task<IDownload> downloadTask =
+                _page.WaitForDownloadAsync();
+
+            await locator
+                .Nth(0)
+                .ClickAsync();
+
+            IDownload download =
+                await downloadTask;
+
+            // -------------------------------------------------
+            // Determine target filename
+            // -------------------------------------------------
+
+            string targetPath;
+
+            if (string.IsNullOrWhiteSpace(
+                    preferredRelativePath))
+            {
+                string safeSuggestedName =
+                    Path.GetFileName(
+                        download.SuggestedFilename
+                    );
+
+                targetPath =
+                    ResolvePathInsideRoot(
+                        DownloadsDirectory,
+                        safeSuggestedName
+                    );
+            }
+            else
+            {
+                targetPath =
+                    ResolvePathInsideRoot(
+                        DownloadsDirectory,
+                        preferredRelativePath
+                    );
+            }
+
+            string? parentDirectory =
+                Path.GetDirectoryName(
+                    targetPath
+                );
+
+            if (!string.IsNullOrWhiteSpace(
+                    parentDirectory))
+            {
+                Directory.CreateDirectory(
+                    parentDirectory
+                );
+            }
+
+            // -------------------------------------------------
+            // Save download
+            // -------------------------------------------------
+
+            await download.SaveAsAsync(
+                targetPath
+            );
+
+            if (!File.Exists(targetPath))
+            {
+                return
+                    $"ERROR: Browser reported a download but the file was not found at {targetPath}.";
+            }
+
+            long size =
+                new FileInfo(
+                    targetPath
+                ).Length;
+
+            return
+                "SUCCESS: Download completed and verified.\n" +
+                $"File: {targetPath}\n" +
+                $"Size: {size} bytes";
+        }
+        catch (Exception ex)
+        {
+            return
+                $"ERROR: Browser download failed: {ex.Message}";
+        }
+    }
+
+    // =========================================================
+    // LIST DOWNLOADED FILES
+    // =========================================================
+
+    public static string ListDownloads()
+    {
+        try
+        {
+            Directory.CreateDirectory(
+                DownloadsDirectory
+            );
+
+            string[] files =
+                Directory.GetFiles(
+                    DownloadsDirectory,
+                    "*",
+                    SearchOption.AllDirectories
+                );
+
+            if (files.Length == 0)
+            {
+                return
+                    $"DOWNLOADS\nDirectory: {DownloadsDirectory}\nNo files found.";
+            }
+
+            StringBuilder result =
+                new StringBuilder();
+
+            result.AppendLine(
+                "DOWNLOADS"
+            );
+
+            result.AppendLine(
+                $"Directory: {DownloadsDirectory}"
+            );
+
+            for (int i = 0;
+                 i < files.Length;
+                 i++)
+            {
+                FileInfo info =
+                    new FileInfo(
+                        files[i]
+                    );
+
+                string relative =
+                    Path.GetRelativePath(
+                        DownloadsDirectory,
+                        files[i]
+                    );
+
+                result.AppendLine(
+                    $"[{i + 1}] {relative} ({info.Length} bytes)"
+                );
+            }
+
+            return result.ToString();
+        }
+        catch (Exception ex)
+        {
+            return
+                $"ERROR: Could not list downloaded files: {ex.Message}";
+        }
+    }
+
+    // =========================================================
     // BACK
     // =========================================================
 
@@ -755,6 +1488,14 @@ public static class BrowserTools
     {
         try
         {
+            if (!IsBrowserRunning())
+            {
+                return
+                    "ERROR: Browser is not running.";
+            }
+
+            await EnsureCurrentPageAsync();
+
             if (_page == null)
             {
                 return
@@ -766,7 +1507,9 @@ public static class BrowserTools
                 {
                     WaitUntil =
                         WaitUntilState.DOMContentLoaded,
-                    Timeout = 30000
+
+                    Timeout =
+                        30000
                 }
             );
 
@@ -788,6 +1531,14 @@ public static class BrowserTools
     {
         try
         {
+            if (!IsBrowserRunning())
+            {
+                return
+                    "ERROR: Browser is not running.";
+            }
+
+            await EnsureCurrentPageAsync();
+
             if (_page == null)
             {
                 return
@@ -799,7 +1550,9 @@ public static class BrowserTools
                 {
                     WaitUntil =
                         WaitUntilState.DOMContentLoaded,
-                    Timeout = 30000
+
+                    Timeout =
+                        30000
                 }
             );
 
@@ -821,6 +1574,14 @@ public static class BrowserTools
     {
         try
         {
+            if (!IsBrowserRunning())
+            {
+                return
+                    "ERROR: Browser is not running.";
+            }
+
+            await EnsureCurrentPageAsync();
+
             if (_page == null)
             {
                 return
@@ -832,7 +1593,9 @@ public static class BrowserTools
                 {
                     WaitUntil =
                         WaitUntilState.DOMContentLoaded,
-                    Timeout = 30000
+
+                    Timeout =
+                        30000
                 }
             );
 
@@ -866,14 +1629,18 @@ public static class BrowserTools
             _page =
                 await _context!.NewPageAsync();
 
-            _page.SetDefaultTimeout(
-                15000
+            ConfigurePage(
+                _page
             );
+
+            await _page.BringToFrontAsync();
 
             if (!string.IsNullOrWhiteSpace(url))
             {
                 url =
-                    NormalizeUrl(url);
+                    NormalizeUrl(
+                        url
+                    );
 
                 await _page.GotoAsync(
                     url,
@@ -881,7 +1648,9 @@ public static class BrowserTools
                     {
                         WaitUntil =
                             WaitUntilState.DOMContentLoaded,
-                        Timeout = 30000
+
+                        Timeout =
+                            30000
                     }
                 );
             }
@@ -907,7 +1676,8 @@ public static class BrowserTools
     {
         try
         {
-            if (_context == null)
+            if (!IsBrowserRunning() ||
+                _context == null)
             {
                 return
                     "ERROR: Browser is not running.";
@@ -976,7 +1746,8 @@ public static class BrowserTools
     {
         try
         {
-            if (_context == null)
+            if (!IsBrowserRunning() ||
+                _context == null)
             {
                 return
                     "ERROR: Browser is not running.";
@@ -994,13 +1765,18 @@ public static class BrowserTools
                     tabNumber - 1
                 ];
 
+            ConfigurePage(
+                _page
+            );
+
             await _page.BringToFrontAsync();
 
             string title =
                 await _page.TitleAsync();
 
             return
-                $"SUCCESS: Switched to tab {tabNumber}. Title: {title}. URL: {_page.Url}";
+                $"SUCCESS: Switched to tab {tabNumber}. " +
+                $"Title: {title}. URL: {_page.Url}";
         }
         catch (Exception ex)
         {
@@ -1018,7 +1794,8 @@ public static class BrowserTools
     {
         try
         {
-            if (_context == null)
+            if (!IsBrowserRunning() ||
+                _context == null)
             {
                 return
                     "ERROR: Browser is not running.";
@@ -1042,23 +1819,38 @@ public static class BrowserTools
                     _page
                 );
 
-            await tab.CloseAsync();
-
-            if (_context.Pages.Count == 0)
+            if (_context.Pages.Count == 1)
             {
-                _page =
+                IPage replacement =
                     await _context.NewPageAsync();
 
-                _page.SetDefaultTimeout(
-                    15000
+                ConfigurePage(
+                    replacement
                 );
+
+                _page =
+                    replacement;
+
+                await replacement.BringToFrontAsync();
             }
-            else if (closingCurrent)
+
+            await tab.CloseAsync();
+
+            if (_context.Pages.Count > 0 &&
+                closingCurrent &&
+                (_page == null ||
+                 ReferenceEquals(
+                     _page,
+                     tab)))
             {
                 _page =
                     _context.Pages[
                         _context.Pages.Count - 1
                     ];
+
+                ConfigurePage(
+                    _page
+                );
 
                 await _page.BringToFrontAsync();
             }
@@ -1083,46 +1875,59 @@ public static class BrowserTools
         {
             if (_context != null)
             {
-                await _context.CloseAsync();
-            }
-
-            if (_browser != null)
-            {
-                await _browser.CloseAsync();
+                try
+                {
+                    await _context.CloseAsync();
+                }
+                catch
+                {
+                }
             }
 
             _page = null;
             _context = null;
-            _browser = null;
 
-            _playwright?.Dispose();
+            if (_playwright != null)
+            {
+                try
+                {
+                    _playwright.Dispose();
+                }
+                catch
+                {
+                }
 
-            _playwright = null;
+                _playwright = null;
+            }
 
             return
-                "SUCCESS: Browser closed.";
+                "SUCCESS: Browser closed. Persistent Operator AI session data was retained.";
         }
         catch (Exception ex)
         {
+            _page = null;
+            _context = null;
+
+            if (_playwright != null)
+            {
+                try
+                {
+                    _playwright.Dispose();
+                }
+                catch
+                {
+                }
+
+                _playwright = null;
+            }
+
             return
-                $"ERROR: Could not close browser: {ex.Message}";
+                $"ERROR: Could not close browser cleanly: {ex.Message}";
         }
     }
 
     // =========================================================
     // RESOLVE LOCATOR
-    //
-    // Supported locator types:
-    //
-    // css
-    // text
-    // label
-    // placeholder
-    // title
-    // testid
-    //
-    // Playwright recommends user-facing locators such as role,
-    // label, placeholder, and text where practical.
     // =========================================================
 
     private static ILocator ResolveLocator(
@@ -1189,22 +1994,290 @@ public static class BrowserTools
     }
 
     // =========================================================
+    // SELECT OPTION BUILDER
+    // =========================================================
+
+    private static SelectOptionValue BuildSelectOption(
+        string selectionType,
+        string selection)
+    {
+        string type =
+            selectionType
+                .Trim()
+                .ToLowerInvariant();
+
+        switch (type)
+        {
+            case "value":
+                {
+                    return
+                        new SelectOptionValue
+                        {
+                            Value =
+                                selection
+                        };
+                }
+
+            case "label":
+                {
+                    return
+                        new SelectOptionValue
+                        {
+                            Label =
+                                selection
+                        };
+                }
+
+            case "index":
+                {
+                    if (!int.TryParse(
+                            selection,
+                            out int index))
+                    {
+                        throw new ArgumentException(
+                            $"Dropdown index '{selection}' is not a valid integer."
+                        );
+                    }
+
+                    if (index < 0)
+                    {
+                        throw new ArgumentException(
+                            "Dropdown index cannot be negative."
+                        );
+                    }
+
+                    return
+                        new SelectOptionValue
+                        {
+                            Index =
+                                index
+                        };
+                }
+
+            default:
+                {
+                    throw new ArgumentException(
+                        $"Unsupported selection type '{selectionType}'. " +
+                        "Supported types: value, label, index."
+                    );
+                }
+        }
+    }
+
+    // =========================================================
+    // WAIT STATE PARSER
+    // =========================================================
+
+    private static WaitForSelectorState ParseWaitState(
+        string state)
+    {
+        string normalized =
+            state
+                .Trim()
+                .ToLowerInvariant();
+
+        return normalized switch
+        {
+            "visible" =>
+                WaitForSelectorState.Visible,
+
+            "hidden" =>
+                WaitForSelectorState.Hidden,
+
+            "attached" =>
+                WaitForSelectorState.Attached,
+
+            "detached" =>
+                WaitForSelectorState.Detached,
+
+            _ =>
+                throw new ArgumentException(
+                    $"Unsupported wait state '{state}'. " +
+                    "Supported states: visible, hidden, attached, detached."
+                )
+        };
+    }
+
+    // =========================================================
+    // SAFE PATH RESOLUTION
+    // =========================================================
+
+    private static string ResolvePathInsideRoot(
+        string rootDirectory,
+        string relativePath)
+    {
+        if (string.IsNullOrWhiteSpace(
+                relativePath))
+        {
+            throw new ArgumentException(
+                "File path cannot be empty."
+            );
+        }
+
+        if (Path.IsPathRooted(
+                relativePath))
+        {
+            throw new InvalidOperationException(
+                "Absolute paths are not allowed for this operation."
+            );
+        }
+
+        string root =
+            Path.GetFullPath(
+                rootDirectory
+            )
+            .TrimEnd(
+                Path.DirectorySeparatorChar,
+                Path.AltDirectorySeparatorChar
+            );
+
+        string resolved =
+            Path.GetFullPath(
+                Path.Combine(
+                    root,
+                    relativePath
+                )
+            );
+
+        string requiredPrefix =
+            root +
+            Path.DirectorySeparatorChar;
+
+        if (!resolved.StartsWith(
+                requiredPrefix,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                "Requested file path escapes the allowed directory."
+            );
+        }
+
+        return resolved;
+    }
+
+    // =========================================================
     // ENSURE BROWSER
     // =========================================================
 
     private static async Task<string> EnsureBrowserAsync()
     {
-        if (_browser != null &&
-            _browser.IsConnected &&
-            _context != null &&
-            _page != null)
+        if (IsBrowserRunning())
         {
+            await EnsureCurrentPageAsync();
+
             return
                 "SUCCESS";
         }
 
         return
             await StartBrowserAsync();
+    }
+
+    // =========================================================
+    // ENSURE CURRENT PAGE
+    // =========================================================
+
+    private static async Task EnsureCurrentPageAsync()
+    {
+        if (_context == null)
+        {
+            return;
+        }
+
+        if (_page != null)
+        {
+            try
+            {
+                if (!_page.IsClosed)
+                {
+                    ConfigurePage(
+                        _page
+                    );
+
+                    return;
+                }
+            }
+            catch
+            {
+                _page = null;
+            }
+        }
+
+        if (_context.Pages.Count > 0)
+        {
+            _page =
+                _context.Pages[
+                    _context.Pages.Count - 1
+                ];
+
+            ConfigurePage(
+                _page
+            );
+
+            await _page.BringToFrontAsync();
+
+            return;
+        }
+
+        _page =
+            await _context.NewPageAsync();
+
+        ConfigurePage(
+            _page
+        );
+
+        await _page.BringToFrontAsync();
+    }
+
+    // =========================================================
+    // CHECK BROWSER STATE
+    // =========================================================
+
+    private static bool IsBrowserRunning()
+    {
+        try
+        {
+            if (_context == null)
+            {
+                return false;
+            }
+
+            IBrowser? browser =
+                _context.Browser;
+
+            if (browser == null)
+            {
+                return false;
+            }
+
+            return
+                browser.IsConnected;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    // =========================================================
+    // CONFIGURE PAGE
+    // =========================================================
+
+    private static void ConfigurePage(
+        IPage? page)
+    {
+        if (page == null)
+        {
+            return;
+        }
+
+        page.SetDefaultTimeout(
+            15000
+        );
+
+        page.SetDefaultNavigationTimeout(
+            30000
+        );
     }
 
     // =========================================================
@@ -1246,6 +2319,10 @@ public static class BrowserTools
             ||
             result.StartsWith(
                 "NOT_FOUND",
+                StringComparison.OrdinalIgnoreCase)
+            ||
+            result.StartsWith(
+                "BLOCKED",
                 StringComparison.OrdinalIgnoreCase);
     }
 }

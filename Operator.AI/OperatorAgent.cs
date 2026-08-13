@@ -260,7 +260,7 @@ public sealed class OperatorAgent
         );
 
     // =========================================================
-    // RELIABLE WINDOWS SAVE WORKFLOW
+    // WINDOWS SAVE WORKFLOW
     // =========================================================
 
     private static readonly FunctionTool SaveActiveDocumentTool =
@@ -275,9 +275,7 @@ public sealed class OperatorAgent
                   "type": "object",
                   "properties": {
                     "relative_path": {
-                      "type": "string",
-                      "description":
-                        "Path relative to Desktop, for example operations-report.txt or Reports\\daily-report.txt"
+                      "type": "string"
                     }
                   },
                   "required": ["relative_path"],
@@ -289,15 +287,23 @@ public sealed class OperatorAgent
         );
 
     // =========================================================
-    // VERSION 0.6C
-    // BROWSER TOOLS
+    // BROWSER BASIC TOOLS
     // =========================================================
 
     private static readonly FunctionTool StartBrowserTool =
         ResponseTool.CreateFunctionTool(
             functionName: "start_browser",
             functionDescription:
-                "Start the Operator AI Chromium browser if it is not already running.",
+                "Start the persistent Operator AI Chromium browser if it is not already running.",
+            functionParameters: null,
+            strictModeEnabled: false
+        );
+
+    private static readonly FunctionTool BrowserSessionInfoTool =
+        ResponseTool.CreateFunctionTool(
+            functionName: "browser_session_info",
+            functionDescription:
+                "Get information about the current persistent browser session, including profile location, current URL, title, and number of tabs.",
             functionParameters: null,
             strictModeEnabled: false
         );
@@ -337,7 +343,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_read_page",
             functionDescription:
-                "Read visible text from the current browser page. Use this to understand or summarize page contents.",
+                "Read visible text from the current browser page.",
             functionParameters: null,
             strictModeEnabled: false
         );
@@ -346,7 +352,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_list_links",
             functionDescription:
-                "List links visible in the current browser page, including link text and href values.",
+                "List links in the current browser page.",
             functionParameters: null,
             strictModeEnabled: false
         );
@@ -355,7 +361,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_list_elements",
             functionDescription:
-                "Inspect interactive elements on the current page such as links, buttons, inputs, textareas, and selects. Use this when unsure how to interact with a webpage.",
+                "List interactive elements including buttons, inputs, links, textareas, and select elements.",
             functionParameters: null,
             strictModeEnabled: false
         );
@@ -364,7 +370,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_find",
             functionDescription:
-                "Find matching elements on the current webpage. Supported locator types: css, text, label, placeholder, title, testid.",
+                "Find webpage elements using locator types css, text, label, placeholder, title, or testid.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -388,11 +394,55 @@ public sealed class OperatorAgent
             strictModeEnabled: true
         );
 
+    // =========================================================
+    // 0.6D WAIT TOOL
+    // =========================================================
+
+    private static readonly FunctionTool BrowserWaitTool =
+        ResponseTool.CreateFunctionTool(
+            functionName: "browser_wait",
+            functionDescription:
+                "Wait for a browser element to reach a state. States: visible, hidden, attached, detached.",
+            functionParameters: BinaryData.FromString(
+                """
+                {
+                  "type": "object",
+                  "properties": {
+                    "locator_type": {
+                      "type": "string"
+                    },
+                    "query": {
+                      "type": "string"
+                    },
+                    "state": {
+                      "type": "string"
+                    },
+                    "timeout_seconds": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "locator_type",
+                    "query",
+                    "state",
+                    "timeout_seconds"
+                  ],
+                  "additionalProperties": false
+                }
+                """
+            ),
+            strictModeEnabled: true
+        );
+
+    // =========================================================
+    // CLICK / FILL / TYPE / PRESS
+    // =========================================================
+
     private static readonly FunctionTool BrowserClickTool =
         ResponseTool.CreateFunctionTool(
             functionName: "browser_click",
             functionDescription:
-                "Click the first browser element matching the locator. Supported locator types: css, text, label, placeholder, title, testid.",
+                "Click the first matching browser element.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -420,7 +470,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_fill",
             functionDescription:
-                "Replace the contents of a browser input or textarea with the supplied text. Supported locator types: css, text, label, placeholder, title, testid.",
+                "Replace the contents of a browser form field with text.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -452,7 +502,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_type",
             functionDescription:
-                "Type text character-by-character into a browser input. Prefer browser_fill for ordinary form input unless simulated typing is necessary.",
+                "Type text character-by-character into a browser field.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -484,7 +534,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_press",
             functionDescription:
-                "Press a keyboard key on a specific browser element. Examples: Enter, Tab, Escape, ArrowDown.",
+                "Press a keyboard key on a specific browser element.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -534,11 +584,200 @@ public sealed class OperatorAgent
             strictModeEnabled: true
         );
 
+    // =========================================================
+    // 0.6D CHECKBOX / RADIO TOOLS
+    // =========================================================
+
+    private static readonly FunctionTool BrowserSetCheckedTool =
+        ResponseTool.CreateFunctionTool(
+            functionName: "browser_set_checked",
+            functionDescription:
+                "Set a checkbox or radio element to checked or unchecked and verify the resulting state.",
+            functionParameters: BinaryData.FromString(
+                """
+                {
+                  "type": "object",
+                  "properties": {
+                    "locator_type": {
+                      "type": "string"
+                    },
+                    "query": {
+                      "type": "string"
+                    },
+                    "checked": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "locator_type",
+                    "query",
+                    "checked"
+                  ],
+                  "additionalProperties": false
+                }
+                """
+            ),
+            strictModeEnabled: true
+        );
+
+    private static readonly FunctionTool BrowserGetCheckedTool =
+        ResponseTool.CreateFunctionTool(
+            functionName: "browser_get_checked",
+            functionDescription:
+                "Read whether a checkbox or radio element is currently checked.",
+            functionParameters: BinaryData.FromString(
+                """
+                {
+                  "type": "object",
+                  "properties": {
+                    "locator_type": {
+                      "type": "string"
+                    },
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "locator_type",
+                    "query"
+                  ],
+                  "additionalProperties": false
+                }
+                """
+            ),
+            strictModeEnabled: true
+        );
+
+    // =========================================================
+    // 0.6D DROPDOWN TOOL
+    // =========================================================
+
+    private static readonly FunctionTool BrowserSelectOptionTool =
+        ResponseTool.CreateFunctionTool(
+            functionName: "browser_select_option",
+            functionDescription:
+                "Choose an option from a standard HTML select element. selection_type may be value, label, or index.",
+            functionParameters: BinaryData.FromString(
+                """
+                {
+                  "type": "object",
+                  "properties": {
+                    "locator_type": {
+                      "type": "string"
+                    },
+                    "query": {
+                      "type": "string"
+                    },
+                    "selection_type": {
+                      "type": "string"
+                    },
+                    "selection": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "locator_type",
+                    "query",
+                    "selection_type",
+                    "selection"
+                  ],
+                  "additionalProperties": false
+                }
+                """
+            ),
+            strictModeEnabled: true
+        );
+
+    // =========================================================
+    // 0.6D FILE UPLOAD
+    // =========================================================
+
+    private static readonly FunctionTool BrowserUploadTool =
+        ResponseTool.CreateFunctionTool(
+            functionName: "browser_upload_desktop_file",
+            functionDescription:
+                "Upload a file from the user's Desktop into a webpage file input. The file path must be relative to Desktop.",
+            functionParameters: BinaryData.FromString(
+                """
+                {
+                  "type": "object",
+                  "properties": {
+                    "locator_type": {
+                      "type": "string"
+                    },
+                    "query": {
+                      "type": "string"
+                    },
+                    "relative_path": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "locator_type",
+                    "query",
+                    "relative_path"
+                  ],
+                  "additionalProperties": false
+                }
+                """
+            ),
+            strictModeEnabled: true
+        );
+
+    // =========================================================
+    // 0.6D DOWNLOAD TOOLS
+    // =========================================================
+
+    private static readonly FunctionTool BrowserDownloadTool =
+        ResponseTool.CreateFunctionTool(
+            functionName: "browser_download",
+            functionDescription:
+                "Click a webpage element that starts a download and save the file under Desktop\\OperatorDownloads. preferred_relative_path may be an empty string to use the website's suggested filename.",
+            functionParameters: BinaryData.FromString(
+                """
+                {
+                  "type": "object",
+                  "properties": {
+                    "locator_type": {
+                      "type": "string"
+                    },
+                    "query": {
+                      "type": "string"
+                    },
+                    "preferred_relative_path": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "locator_type",
+                    "query",
+                    "preferred_relative_path"
+                  ],
+                  "additionalProperties": false
+                }
+                """
+            ),
+            strictModeEnabled: true
+        );
+
+    private static readonly FunctionTool BrowserListDownloadsTool =
+        ResponseTool.CreateFunctionTool(
+            functionName: "browser_list_downloads",
+            functionDescription:
+                "List files downloaded by Operator AI under Desktop\\OperatorDownloads.",
+            functionParameters: null,
+            strictModeEnabled: false
+        );
+
+    // =========================================================
+    // BROWSER NAVIGATION / TAB TOOLS
+    // =========================================================
+
     private static readonly FunctionTool BrowserBackTool =
         ResponseTool.CreateFunctionTool(
             functionName: "browser_back",
             functionDescription:
-                "Navigate the current browser tab backward in history.",
+                "Navigate backward in browser history.",
             functionParameters: null,
             strictModeEnabled: false
         );
@@ -547,7 +786,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_forward",
             functionDescription:
-                "Navigate the current browser tab forward in history.",
+                "Navigate forward in browser history.",
             functionParameters: null,
             strictModeEnabled: false
         );
@@ -565,7 +804,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_new_tab",
             functionDescription:
-                "Open a new browser tab. Provide an empty string for url if a blank tab is desired.",
+                "Open a new browser tab. Pass an empty URL for a blank tab.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -587,7 +826,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_list_tabs",
             functionDescription:
-                "List all currently open Operator AI browser tabs and indicate which one is current.",
+                "List currently open Operator AI browser tabs.",
             functionParameters: null,
             strictModeEnabled: false
         );
@@ -596,7 +835,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_switch_tab",
             functionDescription:
-                "Switch to a browser tab by its 1-based tab number from browser_list_tabs.",
+                "Switch to a browser tab using its 1-based tab number.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -618,7 +857,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "browser_close_tab",
             functionDescription:
-                "Close a browser tab by its 1-based tab number.",
+                "Close a browser tab using its 1-based tab number.",
             functionParameters: BinaryData.FromString(
                 """
                 {
@@ -640,7 +879,7 @@ public sealed class OperatorAgent
         ResponseTool.CreateFunctionTool(
             functionName: "stop_browser",
             functionDescription:
-                "Close the Operator AI Chromium browser and its tabs.",
+                "Close the Operator AI Chromium browser while retaining its persistent session data.",
             functionParameters: null,
             strictModeEnabled: false
         );
@@ -698,9 +937,8 @@ public sealed class OperatorAgent
                     cancellationToken
                 );
 
-        // Browser tasks can take longer than simple Windows tasks.
         timeoutSource.CancelAfter(
-            TimeSpan.FromMinutes(5)
+            TimeSpan.FromMinutes(7)
         );
 
         CancellationToken token =
@@ -709,7 +947,7 @@ public sealed class OperatorAgent
         try
         {
             for (int step = 1;
-                 step <= 40;
+                 step <= 50;
                  step++)
             {
                 token.ThrowIfCancellationRequested();
@@ -728,280 +966,166 @@ public sealed class OperatorAgent
                             """
                             You are Operator AI, a Windows and browser automation agent.
 
-                            Your job is to complete real tasks on the user's
-                            computer using the available tools.
+                            Complete the user's requested task using the available tools.
 
-                            =================================================
-                            GENERAL RULES
-                            =================================================
+                            GENERAL
 
-                            - Use tools for real computer or browser actions.
-                            - Never claim an action happened unless a tool confirms it.
-                            - Verify important outcomes whenever practical.
-                            - Never invent successful results.
-                            - Stay within the capabilities exposed by the tools.
+                            - Use tools for real actions.
+                            - Never claim success unless a tool confirms it.
+                            - Verify important results whenever practical.
+                            - Prefer reliable structured browser tools over guessing.
                             - Do not repeat failed actions indefinitely.
-                            - Prefer reliable structured tools over fragile UI guessing.
+                            - Never invent webpage contents or computer state.
 
-                            =================================================
-                            WINDOWS RULES
-                            =================================================
+                            WINDOWS
 
-                            - Use open_application for supported Windows apps.
-                            - Use list_windows if you need the actual window title.
-                            - Use focus_window before interacting with a desktop app.
-                            - Use inspect_window when you need the UI state.
-                            - Use type_text for desktop text entry.
-                            - Use press_key for desktop keyboard shortcuts.
+                            - Use open_application for supported Windows applications.
+                            - Use list_windows when you need an actual window title.
+                            - Use focus_window before desktop interaction.
+                            - Use inspect_window when desktop UI state is unclear.
+                            - Use type_text for desktop text.
+                            - Use press_key for desktop shortcuts.
+                            - Prefer save_active_document_as_desktop_file for reliable Desktop saving.
 
-                            =================================================
-                            WINDOWS SAVING RULES
-                            =================================================
+                            BROWSER SESSION
 
-                            - Prefer save_active_document_as_desktop_file when
-                              saving an active Windows document to Desktop.
-                            - Verify saved files with desktop_file_exists.
-                            - Read files back when content verification is required.
+                            - Operator AI uses a persistent dedicated browser profile.
+                            - Login cookies and site state may survive browser restarts.
+                            - Never assume a user is logged in; inspect the page.
+                            - Use browser_session_info when browser session state is useful.
 
-                            =================================================
-                            BROWSER RULES
-                            =================================================
+                            BROWSER NAVIGATION
 
                             - Use start_browser before browser work when needed.
                             - Use browser_navigate to visit URLs.
-                            - Use browser_get_page_info to confirm title and URL.
-                            - Use browser_read_page to understand page content.
-                            - Use browser_list_elements when you do not know
-                              how to locate an interactive element.
-                            - Use browser_find when you need to test a locator.
+                            - Use browser_get_page_info to verify title and URL.
+                            - Use browser_read_page to understand page contents.
+                            - Use browser_list_elements when you are unsure how to interact.
+                            - Use browser_find to validate a locator.
 
-                            - Supported browser locator types are:
-                              css
-                              text
-                              label
-                              placeholder
-                              title
-                              testid
+                            LOCATORS
 
-                            - Prefer human-readable locators such as:
-                              label
-                              placeholder
-                              text
+                            Supported locator types:
+                            - css
+                            - text
+                            - label
+                            - placeholder
+                            - title
+                            - testid
 
-                              before using complicated CSS selectors.
+                            Prefer label, placeholder, or visible text when practical.
+                            Use CSS when a stable human-readable locator is unavailable.
 
-                            - Use browser_fill for normal form fields.
-                            - Use browser_type only when character-by-character
-                              typing is specifically useful.
-                            - Use browser_press to press Enter or another key
-                              on a specific element.
-                            - Use browser_page_key for page-wide keyboard actions.
-                            - Use browser_click for buttons and links.
+                            WAITING
 
-                            =================================================
-                            BROWSER NAVIGATION RULES
-                            =================================================
+                            - Use browser_wait when a page is loading dynamically or an element may appear later.
+                            - Valid states are visible, hidden, attached, detached.
+                            - Prefer waiting for a meaningful UI state rather than blindly repeating an action.
 
-                            - Use browser_back and browser_forward for history.
-                            - Use browser_reload when refreshing is appropriate.
-                            - Use browser_new_tab when a task needs another page.
-                            - Use browser_list_tabs before switching tabs if
-                              you are uncertain which tab number to use.
-                            - Use browser_switch_tab to change current tabs.
-                            - Use browser_close_tab only when useful to the task.
+                            FORMS
 
-                            =================================================
-                            BROWSER RESEARCH RULES
-                            =================================================
+                            - Use browser_fill for ordinary text inputs.
+                            - Use browser_type only when character-by-character typing is required.
+                            - Use browser_set_checked for checkboxes and radio controls.
+                            - Use browser_get_checked if state verification is important.
+                            - Use browser_select_option for standard HTML select dropdowns.
+                            - Use browser_press for Enter, Tab, Escape, or other element-specific keys.
 
-                            - When asked to find or understand information online,
-                              navigate to appropriate pages and read their contents.
-                            - Do not infer page content without reading it.
-                            - If a page does not contain the needed information,
-                              use links, navigation, or another appropriate webpage.
-                            - Confirm the final page state before reporting completion.
+                            FILE UPLOADS
 
-                            =================================================
-                            SENSITIVE / CONSEQUENTIAL ACTION RULES
-                            =================================================
+                            - browser_upload_desktop_file can upload only files located under Desktop.
+                            - Never invent a filename.
+                            - Verify the requested Desktop file exists first when useful.
+                            - Uploading a file is not the same as submitting a form.
 
-                            - Browsing, searching, reading, and ordinary navigation
-                              may proceed automatically when requested.
+                            DOWNLOADS
 
-                            - Do not submit purchases, financial transactions,
-                              account deletions, password changes, or similarly
-                              consequential actions unless the user explicitly
-                              asked for that exact action.
+                            - Use browser_download when clicking an element is expected to download a file.
+                            - Downloads are stored under Desktop\OperatorDownloads.
+                            - Use browser_list_downloads when verification is needed.
+                            - A successful download tool result already verifies the saved file exists.
 
-                            - Do not infer permission for consequential actions
-                              merely because you can see a button.
+                            TABS
 
-                            =================================================
-                            RECOVERY RULES
-                            =================================================
+                            - Use browser_new_tab for a separate page.
+                            - Use browser_list_tabs when tab numbers are uncertain.
+                            - Use browser_switch_tab to change current page.
+                            - Avoid unnecessary tabs.
+
+                            RECOVERY
 
                             - ERROR, NOT_FOUND, and BLOCKED mean the strategy failed.
-                            - Do not immediately give up after one recoverable failure.
-                            - Inspect the current state and try a reasonable alternative.
-                            - If browser_find fails, inspect interactive elements
-                              and try a better locator.
-                            - If a repeated tool call is blocked, do not issue
-                              the identical call again.
-                            - Change strategy or arguments instead.
-                            - Do not enter loops.
-                            - After several unsuccessful recovery attempts,
-                              stop and explain what prevented completion.
+                            - After a locator failure, inspect browser elements or try a different locator.
+                            - Do not repeat the exact same failing call.
+                            - Use browser_wait for delayed elements.
+                            - Stop after several unsuccessful recovery attempts and explain what failed.
 
-                            =================================================
-                            COMPLETION RULES
-                            =================================================
+                            CONSEQUENTIAL ACTIONS
 
-                            - Finish only when the requested outcome is confirmed.
-                            - For browser research, read enough page content to
-                              support the final answer.
-                            - For browser navigation tasks, confirm the final URL
-                              or page state when practical.
-                            - For file tasks, verify the resulting file.
-                            - If completion is impossible, clearly state which
-                              action remains unresolved.
+                            - Reading, navigation, searching, typing into ordinary non-sensitive fields, and preparing forms may proceed when requested.
+                            - Do not complete purchases, transfers, account deletion, password changes, final legal submissions, or similarly consequential actions unless the user explicitly requested that exact action.
+                            - If a webpage presents a final submit/pay/delete/confirm action with major consequences and the user's request did not clearly authorize it, stop before that action.
+
+                            COMPLETION
+
+                            - Confirm the requested outcome before declaring completion.
+                            - For research tasks, read sufficient page content.
+                            - For downloads, verify the file.
+                            - For uploads, confirm the file was attached when practical.
+                            - For forms, verify values/state when practical.
+                            - If the task cannot be completed, state the exact unresolved step.
                             """
                     };
 
                 // =================================================
-                // WINDOWS TOOLS
+                // REGISTER WINDOWS TOOLS
                 // =================================================
 
-                options.Tools.Add(
-                    OpenApplicationTool
-                );
-
-                options.Tools.Add(
-                    CreateFolderTool
-                );
-
-                options.Tools.Add(
-                    CreateFileTool
-                );
-
-                options.Tools.Add(
-                    ReadFileTool
-                );
-
-                options.Tools.Add(
-                    FileExistsTool
-                );
-
-                options.Tools.Add(
-                    ListDesktopTool
-                );
-
-                options.Tools.Add(
-                    ListWindowsTool
-                );
-
-                options.Tools.Add(
-                    InspectWindowTool
-                );
-
-                options.Tools.Add(
-                    FocusWindowTool
-                );
-
-                options.Tools.Add(
-                    TypeTextTool
-                );
-
-                options.Tools.Add(
-                    PressKeyTool
-                );
-
-                options.Tools.Add(
-                    SaveActiveDocumentTool
-                );
+                options.Tools.Add(OpenApplicationTool);
+                options.Tools.Add(CreateFolderTool);
+                options.Tools.Add(CreateFileTool);
+                options.Tools.Add(ReadFileTool);
+                options.Tools.Add(FileExistsTool);
+                options.Tools.Add(ListDesktopTool);
+                options.Tools.Add(ListWindowsTool);
+                options.Tools.Add(InspectWindowTool);
+                options.Tools.Add(FocusWindowTool);
+                options.Tools.Add(TypeTextTool);
+                options.Tools.Add(PressKeyTool);
+                options.Tools.Add(SaveActiveDocumentTool);
 
                 // =================================================
-                // BROWSER TOOLS
+                // REGISTER BROWSER TOOLS
                 // =================================================
 
-                options.Tools.Add(
-                    StartBrowserTool
-                );
-
-                options.Tools.Add(
-                    BrowserNavigateTool
-                );
-
-                options.Tools.Add(
-                    BrowserPageInfoTool
-                );
-
-                options.Tools.Add(
-                    BrowserReadPageTool
-                );
-
-                options.Tools.Add(
-                    BrowserListLinksTool
-                );
-
-                options.Tools.Add(
-                    BrowserListElementsTool
-                );
-
-                options.Tools.Add(
-                    BrowserFindTool
-                );
-
-                options.Tools.Add(
-                    BrowserClickTool
-                );
-
-                options.Tools.Add(
-                    BrowserFillTool
-                );
-
-                options.Tools.Add(
-                    BrowserTypeTool
-                );
-
-                options.Tools.Add(
-                    BrowserPressTool
-                );
-
-                options.Tools.Add(
-                    BrowserPageKeyTool
-                );
-
-                options.Tools.Add(
-                    BrowserBackTool
-                );
-
-                options.Tools.Add(
-                    BrowserForwardTool
-                );
-
-                options.Tools.Add(
-                    BrowserReloadTool
-                );
-
-                options.Tools.Add(
-                    BrowserNewTabTool
-                );
-
-                options.Tools.Add(
-                    BrowserListTabsTool
-                );
-
-                options.Tools.Add(
-                    BrowserSwitchTabTool
-                );
-
-                options.Tools.Add(
-                    BrowserCloseTabTool
-                );
-
-                options.Tools.Add(
-                    StopBrowserTool
-                );
+                options.Tools.Add(StartBrowserTool);
+                options.Tools.Add(BrowserSessionInfoTool);
+                options.Tools.Add(BrowserNavigateTool);
+                options.Tools.Add(BrowserPageInfoTool);
+                options.Tools.Add(BrowserReadPageTool);
+                options.Tools.Add(BrowserListLinksTool);
+                options.Tools.Add(BrowserListElementsTool);
+                options.Tools.Add(BrowserFindTool);
+                options.Tools.Add(BrowserWaitTool);
+                options.Tools.Add(BrowserClickTool);
+                options.Tools.Add(BrowserFillTool);
+                options.Tools.Add(BrowserTypeTool);
+                options.Tools.Add(BrowserPressTool);
+                options.Tools.Add(BrowserPageKeyTool);
+                options.Tools.Add(BrowserSetCheckedTool);
+                options.Tools.Add(BrowserGetCheckedTool);
+                options.Tools.Add(BrowserSelectOptionTool);
+                options.Tools.Add(BrowserUploadTool);
+                options.Tools.Add(BrowserDownloadTool);
+                options.Tools.Add(BrowserListDownloadsTool);
+                options.Tools.Add(BrowserBackTool);
+                options.Tools.Add(BrowserForwardTool);
+                options.Tools.Add(BrowserReloadTool);
+                options.Tools.Add(BrowserNewTabTool);
+                options.Tools.Add(BrowserListTabsTool);
+                options.Tools.Add(BrowserSwitchTabTool);
+                options.Tools.Add(BrowserCloseTabTool);
+                options.Tools.Add(StopBrowserTool);
 
                 // =================================================
                 // MODEL REQUEST
@@ -1151,7 +1275,7 @@ public sealed class OperatorAgent
             }
 
             string timeoutMessage =
-                "TIMEOUT: Task exceeded the 5-minute limit and was stopped.";
+                "TIMEOUT: Task exceeded the 7-minute limit and was stopped.";
 
             log?.Invoke(
                 $"[TIMEOUT] {timeoutMessage}"
@@ -1204,7 +1328,7 @@ public sealed class OperatorAgent
         switch (call.FunctionName)
         {
             // =================================================
-            // WINDOWS - OPEN APPLICATION
+            // WINDOWS
             // =================================================
 
             case "open_application":
@@ -1215,23 +1339,11 @@ public sealed class OperatorAgent
                             "application"
                         );
 
-                    log?.Invoke(
-                        $"AI requested: Open application '{app}'"
-                    );
-
-                    string result =
+                    return
                         WindowsTools.OpenApplication(
                             app
                         );
-
-                    log?.Invoke(result);
-
-                    return result;
                 }
-
-            // =================================================
-            // WINDOWS - CREATE FOLDER
-            // =================================================
 
             case "create_desktop_folder":
                 {
@@ -1241,19 +1353,11 @@ public sealed class OperatorAgent
                             "folder_name"
                         );
 
-                    string result =
+                    return
                         WindowsTools.CreateDesktopFolder(
                             folder
                         );
-
-                    log?.Invoke(result);
-
-                    return result;
                 }
-
-            // =================================================
-            // WINDOWS - CREATE FILE
-            // =================================================
 
             case "create_desktop_file":
                 {
@@ -1269,20 +1373,12 @@ public sealed class OperatorAgent
                             "content"
                         );
 
-                    string result =
+                    return
                         WindowsTools.CreateDesktopFile(
                             path,
                             content
                         );
-
-                    log?.Invoke(result);
-
-                    return result;
                 }
-
-            // =================================================
-            // WINDOWS - READ FILE
-            // =================================================
 
             case "read_desktop_file":
                 {
@@ -1292,19 +1388,11 @@ public sealed class OperatorAgent
                             "relative_path"
                         );
 
-                    string result =
+                    return
                         WindowsTools.ReadDesktopFile(
                             path
                         );
-
-                    log?.Invoke(result);
-
-                    return result;
                 }
-
-            // =================================================
-            // WINDOWS - FILE EXISTS
-            // =================================================
 
             case "desktop_file_exists":
                 {
@@ -1314,47 +1402,23 @@ public sealed class OperatorAgent
                             "relative_path"
                         );
 
-                    string result =
+                    return
                         WindowsTools.DesktopFileExists(
                             path
                         );
-
-                    log?.Invoke(result);
-
-                    return result;
                 }
-
-            // =================================================
-            // WINDOWS - LIST DESKTOP
-            // =================================================
 
             case "list_desktop":
                 {
-                    string result =
+                    return
                         WindowsTools.ListDesktop();
-
-                    log?.Invoke(result);
-
-                    return result;
                 }
-
-            // =================================================
-            // WINDOWS - LIST WINDOWS
-            // =================================================
 
             case "list_windows":
                 {
-                    string result =
+                    return
                         WindowsUiTools.ListWindows();
-
-                    log?.Invoke(result);
-
-                    return result;
                 }
-
-            // =================================================
-            // WINDOWS - INSPECT WINDOW
-            // =================================================
 
             case "inspect_window":
                 {
@@ -1364,19 +1428,11 @@ public sealed class OperatorAgent
                             "window_title"
                         );
 
-                    string result =
+                    return
                         WindowsUiTools.InspectWindow(
                             title
                         );
-
-                    log?.Invoke(result);
-
-                    return result;
                 }
-
-            // =================================================
-            // WINDOWS - FOCUS WINDOW
-            // =================================================
 
             case "focus_window":
                 {
@@ -1386,19 +1442,11 @@ public sealed class OperatorAgent
                             "window_title"
                         );
 
-                    string result =
+                    return
                         WindowsUiTools.FocusWindow(
                             title
                         );
-
-                    log?.Invoke(result);
-
-                    return result;
                 }
-
-            // =================================================
-            // WINDOWS - TYPE TEXT
-            // =================================================
 
             case "type_text":
                 {
@@ -1414,20 +1462,12 @@ public sealed class OperatorAgent
                             "text"
                         );
 
-                    string result =
+                    return
                         WindowsUiTools.TypeText(
                             title,
                             text
                         );
-
-                    log?.Invoke(result);
-
-                    return result;
                 }
-
-            // =================================================
-            // WINDOWS - PRESS KEY
-            // =================================================
 
             case "press_key":
                 {
@@ -1437,19 +1477,11 @@ public sealed class OperatorAgent
                             "keys"
                         );
 
-                    string result =
+                    return
                         WindowsInputTools.PressKey(
                             keys
                         );
-
-                    log?.Invoke(result);
-
-                    return result;
                 }
-
-            // =================================================
-            // WINDOWS - SAVE WORKFLOW
-            // =================================================
 
             case "save_active_document_as_desktop_file":
                 {
@@ -1459,34 +1491,30 @@ public sealed class OperatorAgent
                             "relative_path"
                         );
 
-                    string result =
+                    return
                         WindowsWorkflowTools
                             .SaveActiveDocumentAsDesktopFile(
                                 path
                             );
-
-                    log?.Invoke(result);
-
-                    return result;
                 }
 
             // =================================================
-            // BROWSER - START
+            // BROWSER BASIC
             // =================================================
 
             case "start_browser":
                 {
-                    string result =
-                        await BrowserTools.StartBrowserAsync();
-
-                    log?.Invoke(result);
-
-                    return result;
+                    return
+                        await BrowserTools
+                            .StartBrowserAsync();
                 }
 
-            // =================================================
-            // BROWSER - NAVIGATE
-            // =================================================
+            case "browser_session_info":
+                {
+                    return
+                        await BrowserTools
+                            .GetSessionInfoAsync();
+                }
 
             case "browser_navigate":
                 {
@@ -1496,76 +1524,40 @@ public sealed class OperatorAgent
                             "url"
                         );
 
-                    string result =
-                        await BrowserTools.NavigateAsync(
-                            url
-                        );
-
-                    log?.Invoke(result);
-
-                    return result;
+                    return
+                        await BrowserTools
+                            .NavigateAsync(
+                                url
+                            );
                 }
-
-            // =================================================
-            // BROWSER - PAGE INFO
-            // =================================================
 
             case "browser_get_page_info":
                 {
-                    string result =
-                        await BrowserTools.GetPageInfoAsync();
-
-                    log?.Invoke(result);
-
-                    return result;
+                    return
+                        await BrowserTools
+                            .GetPageInfoAsync();
                 }
-
-            // =================================================
-            // BROWSER - READ PAGE
-            // =================================================
 
             case "browser_read_page":
                 {
-                    string result =
-                        await BrowserTools.ReadPageTextAsync();
-
-                    log?.Invoke(result);
-
-                    return result;
+                    return
+                        await BrowserTools
+                            .ReadPageTextAsync();
                 }
-
-            // =================================================
-            // BROWSER - LIST LINKS
-            // =================================================
 
             case "browser_list_links":
                 {
-                    string result =
-                        await BrowserTools.ListLinksAsync();
-
-                    log?.Invoke(result);
-
-                    return result;
+                    return
+                        await BrowserTools
+                            .ListLinksAsync();
                 }
-
-            // =================================================
-            // BROWSER - LIST INTERACTIVE ELEMENTS
-            // =================================================
 
             case "browser_list_elements":
                 {
-                    string result =
+                    return
                         await BrowserTools
                             .ListInteractiveElementsAsync();
-
-                    log?.Invoke(result);
-
-                    return result;
                 }
-
-            // =================================================
-            // BROWSER - FIND
-            // =================================================
 
             case "browser_find":
                 {
@@ -1581,19 +1573,56 @@ public sealed class OperatorAgent
                             "query"
                         );
 
-                    string result =
-                        await BrowserTools.FindElementsAsync(
-                            locatorType,
-                            query
-                        );
-
-                    log?.Invoke(result);
-
-                    return result;
+                    return
+                        await BrowserTools
+                            .FindElementsAsync(
+                                locatorType,
+                                query
+                            );
                 }
 
             // =================================================
-            // BROWSER - CLICK
+            // BROWSER WAIT
+            // =================================================
+
+            case "browser_wait":
+                {
+                    string locatorType =
+                        GetStringArgument(
+                            arguments,
+                            "locator_type"
+                        );
+
+                    string query =
+                        GetStringArgument(
+                            arguments,
+                            "query"
+                        );
+
+                    string state =
+                        GetStringArgument(
+                            arguments,
+                            "state"
+                        );
+
+                    int timeoutSeconds =
+                        GetIntArgument(
+                            arguments,
+                            "timeout_seconds"
+                        );
+
+                    return
+                        await BrowserTools
+                            .WaitForElementAsync(
+                                locatorType,
+                                query,
+                                state,
+                                timeoutSeconds
+                            );
+                }
+
+            // =================================================
+            // BROWSER INPUT
             // =================================================
 
             case "browser_click":
@@ -1610,20 +1639,13 @@ public sealed class OperatorAgent
                             "query"
                         );
 
-                    string result =
-                        await BrowserTools.ClickAsync(
-                            locatorType,
-                            query
-                        );
-
-                    log?.Invoke(result);
-
-                    return result;
+                    return
+                        await BrowserTools
+                            .ClickAsync(
+                                locatorType,
+                                query
+                            );
                 }
-
-            // =================================================
-            // BROWSER - FILL
-            // =================================================
 
             case "browser_fill":
                 {
@@ -1645,21 +1667,14 @@ public sealed class OperatorAgent
                             "text"
                         );
 
-                    string result =
-                        await BrowserTools.FillAsync(
-                            locatorType,
-                            query,
-                            text
-                        );
-
-                    log?.Invoke(result);
-
-                    return result;
+                    return
+                        await BrowserTools
+                            .FillAsync(
+                                locatorType,
+                                query,
+                                text
+                            );
                 }
-
-            // =================================================
-            // BROWSER - TYPE
-            // =================================================
 
             case "browser_type":
                 {
@@ -1681,21 +1696,14 @@ public sealed class OperatorAgent
                             "text"
                         );
 
-                    string result =
-                        await BrowserTools.TypeAsync(
-                            locatorType,
-                            query,
-                            text
-                        );
-
-                    log?.Invoke(result);
-
-                    return result;
+                    return
+                        await BrowserTools
+                            .TypeAsync(
+                                locatorType,
+                                query,
+                                text
+                            );
                 }
-
-            // =================================================
-            // BROWSER - PRESS ON ELEMENT
-            // =================================================
 
             case "browser_press":
                 {
@@ -1717,21 +1725,14 @@ public sealed class OperatorAgent
                             "key"
                         );
 
-                    string result =
-                        await BrowserTools.PressAsync(
-                            locatorType,
-                            query,
-                            key
-                        );
-
-                    log?.Invoke(result);
-
-                    return result;
+                    return
+                        await BrowserTools
+                            .PressAsync(
+                                locatorType,
+                                query,
+                                key
+                            );
                 }
-
-            // =================================================
-            // BROWSER - PAGE KEY
-            // =================================================
 
             case "browser_page_key":
                 {
@@ -1741,61 +1742,204 @@ public sealed class OperatorAgent
                             "key"
                         );
 
-                    string result =
-                        await BrowserTools.PressPageKeyAsync(
-                            key
-                        );
-
-                    log?.Invoke(result);
-
-                    return result;
+                    return
+                        await BrowserTools
+                            .PressPageKeyAsync(
+                                key
+                            );
                 }
 
             // =================================================
-            // BROWSER - BACK
+            // CHECKBOX / RADIO
+            // =================================================
+
+            case "browser_set_checked":
+                {
+                    string locatorType =
+                        GetStringArgument(
+                            arguments,
+                            "locator_type"
+                        );
+
+                    string query =
+                        GetStringArgument(
+                            arguments,
+                            "query"
+                        );
+
+                    bool checkedState =
+                        GetBoolArgument(
+                            arguments,
+                            "checked"
+                        );
+
+                    return
+                        await BrowserTools
+                            .SetCheckedAsync(
+                                locatorType,
+                                query,
+                                checkedState
+                            );
+                }
+
+            case "browser_get_checked":
+                {
+                    string locatorType =
+                        GetStringArgument(
+                            arguments,
+                            "locator_type"
+                        );
+
+                    string query =
+                        GetStringArgument(
+                            arguments,
+                            "query"
+                        );
+
+                    return
+                        await BrowserTools
+                            .GetCheckedStateAsync(
+                                locatorType,
+                                query
+                            );
+                }
+
+            // =================================================
+            // DROPDOWN
+            // =================================================
+
+            case "browser_select_option":
+                {
+                    string locatorType =
+                        GetStringArgument(
+                            arguments,
+                            "locator_type"
+                        );
+
+                    string query =
+                        GetStringArgument(
+                            arguments,
+                            "query"
+                        );
+
+                    string selectionType =
+                        GetStringArgument(
+                            arguments,
+                            "selection_type"
+                        );
+
+                    string selection =
+                        GetStringArgument(
+                            arguments,
+                            "selection"
+                        );
+
+                    return
+                        await BrowserTools
+                            .SelectOptionAsync(
+                                locatorType,
+                                query,
+                                selectionType,
+                                selection
+                            );
+                }
+
+            // =================================================
+            // UPLOAD
+            // =================================================
+
+            case "browser_upload_desktop_file":
+                {
+                    string locatorType =
+                        GetStringArgument(
+                            arguments,
+                            "locator_type"
+                        );
+
+                    string query =
+                        GetStringArgument(
+                            arguments,
+                            "query"
+                        );
+
+                    string relativePath =
+                        GetStringArgument(
+                            arguments,
+                            "relative_path"
+                        );
+
+                    return
+                        await BrowserTools
+                            .UploadDesktopFileAsync(
+                                locatorType,
+                                query,
+                                relativePath
+                            );
+                }
+
+            // =================================================
+            // DOWNLOAD
+            // =================================================
+
+            case "browser_download":
+                {
+                    string locatorType =
+                        GetStringArgument(
+                            arguments,
+                            "locator_type"
+                        );
+
+                    string query =
+                        GetStringArgument(
+                            arguments,
+                            "query"
+                        );
+
+                    string preferredRelativePath =
+                        GetStringArgument(
+                            arguments,
+                            "preferred_relative_path"
+                        );
+
+                    return
+                        await BrowserTools
+                            .DownloadByClickAsync(
+                                locatorType,
+                                query,
+                                preferredRelativePath
+                            );
+                }
+
+            case "browser_list_downloads":
+                {
+                    return
+                        BrowserTools.ListDownloads();
+                }
+
+            // =================================================
+            // HISTORY / TABS
             // =================================================
 
             case "browser_back":
                 {
-                    string result =
-                        await BrowserTools.BackAsync();
-
-                    log?.Invoke(result);
-
-                    return result;
+                    return
+                        await BrowserTools
+                            .BackAsync();
                 }
-
-            // =================================================
-            // BROWSER - FORWARD
-            // =================================================
 
             case "browser_forward":
                 {
-                    string result =
-                        await BrowserTools.ForwardAsync();
-
-                    log?.Invoke(result);
-
-                    return result;
+                    return
+                        await BrowserTools
+                            .ForwardAsync();
                 }
-
-            // =================================================
-            // BROWSER - RELOAD
-            // =================================================
 
             case "browser_reload":
                 {
-                    string result =
-                        await BrowserTools.ReloadAsync();
-
-                    log?.Invoke(result);
-
-                    return result;
+                    return
+                        await BrowserTools
+                            .ReloadAsync();
                 }
-
-            // =================================================
-            // BROWSER - NEW TAB
-            // =================================================
 
             case "browser_new_tab":
                 {
@@ -1805,43 +1949,27 @@ public sealed class OperatorAgent
                             "url"
                         );
 
-                    string result;
-
-                    if (string.IsNullOrWhiteSpace(url))
+                    if (string.IsNullOrWhiteSpace(
+                            url))
                     {
-                        result =
-                            await BrowserTools.NewTabAsync();
+                        return
+                            await BrowserTools
+                                .NewTabAsync();
                     }
-                    else
-                    {
-                        result =
-                            await BrowserTools.NewTabAsync(
+
+                    return
+                        await BrowserTools
+                            .NewTabAsync(
                                 url
                             );
-                    }
-
-                    log?.Invoke(result);
-
-                    return result;
                 }
-
-            // =================================================
-            // BROWSER - LIST TABS
-            // =================================================
 
             case "browser_list_tabs":
                 {
-                    string result =
-                        await BrowserTools.ListTabsAsync();
-
-                    log?.Invoke(result);
-
-                    return result;
+                    return
+                        await BrowserTools
+                            .ListTabsAsync();
                 }
-
-            // =================================================
-            // BROWSER - SWITCH TAB
-            // =================================================
 
             case "browser_switch_tab":
                 {
@@ -1851,19 +1979,12 @@ public sealed class OperatorAgent
                             "tab_number"
                         );
 
-                    string result =
-                        await BrowserTools.SwitchTabAsync(
-                            tabNumber
-                        );
-
-                    log?.Invoke(result);
-
-                    return result;
+                    return
+                        await BrowserTools
+                            .SwitchTabAsync(
+                                tabNumber
+                            );
                 }
-
-            // =================================================
-            // BROWSER - CLOSE TAB
-            // =================================================
 
             case "browser_close_tab":
                 {
@@ -1873,28 +1994,18 @@ public sealed class OperatorAgent
                             "tab_number"
                         );
 
-                    string result =
-                        await BrowserTools.CloseTabAsync(
-                            tabNumber
-                        );
-
-                    log?.Invoke(result);
-
-                    return result;
+                    return
+                        await BrowserTools
+                            .CloseTabAsync(
+                                tabNumber
+                            );
                 }
-
-            // =================================================
-            // BROWSER - STOP
-            // =================================================
 
             case "stop_browser":
                 {
-                    string result =
-                        await BrowserTools.StopBrowserAsync();
-
-                    log?.Invoke(result);
-
-                    return result;
+                    return
+                        await BrowserTools
+                            .StopBrowserAsync();
                 }
 
             // =================================================
@@ -1903,18 +2014,14 @@ public sealed class OperatorAgent
 
             default:
                 {
-                    string result =
+                    return
                         $"ERROR: Unknown tool '{call.FunctionName}'.";
-
-                    log?.Invoke(result);
-
-                    return result;
                 }
         }
     }
 
     // =========================================================
-    // SAFE STRING ARGUMENT READER
+    // JSON HELPERS
     // =========================================================
 
     private static string GetStringArgument(
@@ -1942,7 +2049,8 @@ public sealed class OperatorAgent
                 return "";
             }
 
-            return value.GetString()
+            return
+                value.GetString()
                 ?? "";
         }
         catch
@@ -1950,10 +2058,6 @@ public sealed class OperatorAgent
             return "";
         }
     }
-
-    // =========================================================
-    // SAFE INTEGER ARGUMENT READER
-    // =========================================================
 
     private static int GetIntArgument(
         JsonElement arguments,
@@ -1987,6 +2091,45 @@ public sealed class OperatorAgent
         catch
         {
             return 0;
+        }
+    }
+
+    private static bool GetBoolArgument(
+        JsonElement arguments,
+        string propertyName)
+    {
+        try
+        {
+            if (arguments.ValueKind !=
+                JsonValueKind.Object)
+            {
+                return false;
+            }
+
+            if (!arguments.TryGetProperty(
+                    propertyName,
+                    out JsonElement value))
+            {
+                return false;
+            }
+
+            if (value.ValueKind ==
+                JsonValueKind.True)
+            {
+                return true;
+            }
+
+            if (value.ValueKind ==
+                JsonValueKind.False)
+            {
+                return false;
+            }
+
+            return false;
+        }
+        catch
+        {
+            return false;
         }
     }
 }

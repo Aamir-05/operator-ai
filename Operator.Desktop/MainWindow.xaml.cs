@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -9,17 +10,23 @@ namespace Operator.Desktop;
 
 public partial class MainWindow : Window
 {
-    private CancellationTokenSource? _agentCancellation;
+    private CancellationTokenSource?
+        _agentCancellation;
 
     public MainWindow()
     {
         InitializeComponent();
 
         TaskBox.Text =
-            "Open Notepad, type exactly: Monthly operations report, save it to my Desktop as operations-report.txt, verify that the file exists, and read it back.";
+            "Open Wikipedia in the browser, search for OpenAI, read the page, and tell me what it is about.";
 
-        Log("Operator AI started.");
-        Log("Status: Ready.");
+        Log(
+            "Operator AI started."
+        );
+
+        Log(
+            "Status: Ready."
+        );
     }
 
     // =========================================================
@@ -33,15 +40,22 @@ public partial class MainWindow : Window
         string task =
             TaskBox.Text.Trim();
 
-        if (string.IsNullOrWhiteSpace(task))
+        if (string.IsNullOrWhiteSpace(
+                task))
         {
-            Log("Please enter a task.");
+            Log(
+                "Please enter a task."
+            );
+
             return;
         }
 
         if (_agentCancellation != null)
         {
-            Log("A task is already running.");
+            Log(
+                "A task is already running."
+            );
+
             return;
         }
 
@@ -56,9 +70,17 @@ public partial class MainWindow : Window
             StopTaskButton.IsEnabled =
                 true;
 
-            Log("--------------------------------");
-            Log($"TASK: {task}");
-            Log("Starting autonomous agent...");
+            Log(
+                "--------------------------------"
+            );
+
+            Log(
+                $"TASK: {task}"
+            );
+
+            Log(
+                "Starting autonomous agent..."
+            );
 
             OperatorAgent agent =
                 new OperatorAgent();
@@ -68,12 +90,17 @@ public partial class MainWindow : Window
                     task,
                     message =>
                         Dispatcher.Invoke(
-                            () => Log(message)
+                            () =>
+                                Log(
+                                    message
+                                )
                         ),
                     _agentCancellation.Token
                 );
 
-            Log($"AI: {result}");
+            Log(
+                $"AI: {result}"
+            );
         }
         catch (OperationCanceledException)
         {
@@ -89,7 +116,8 @@ public partial class MainWindow : Window
         }
         finally
         {
-            _agentCancellation?.Dispose();
+            _agentCancellation?
+                .Dispose();
 
             _agentCancellation =
                 null;
@@ -100,7 +128,9 @@ public partial class MainWindow : Window
             StopTaskButton.IsEnabled =
                 false;
 
-            Log("Task finished.");
+            Log(
+                "Task finished."
+            );
         }
     }
 
@@ -141,14 +171,19 @@ public partial class MainWindow : Window
     {
         try
         {
-            Log("Opening Notepad...");
+            Log(
+                "Opening Notepad..."
+            );
 
             string result =
-                WindowsTools.OpenApplication(
-                    "notepad"
-                );
+                WindowsTools
+                    .OpenApplication(
+                        "notepad"
+                    );
 
-            Log(result);
+            Log(
+                result
+            );
         }
         catch (Exception ex)
         {
@@ -164,15 +199,20 @@ public partial class MainWindow : Window
     {
         try
         {
-            Log("Creating test.txt...");
+            Log(
+                "Creating test.txt..."
+            );
 
             string result =
-                WindowsTools.CreateDesktopFile(
-                    "test.txt",
-                    "Hello Aamir"
-                );
+                WindowsTools
+                    .CreateDesktopFile(
+                        "test.txt",
+                        "Hello Aamir"
+                    );
 
-            Log(result);
+            Log(
+                result
+            );
         }
         catch (Exception ex)
         {
@@ -188,14 +228,19 @@ public partial class MainWindow : Window
     {
         try
         {
-            Log("Verifying test.txt...");
+            Log(
+                "Verifying test.txt..."
+            );
 
             string result =
-                WindowsTools.DesktopFileExists(
-                    "test.txt"
-                );
+                WindowsTools
+                    .DesktopFileExists(
+                        "test.txt"
+                    );
 
-            Log(result);
+            Log(
+                result
+            );
         }
         catch (Exception ex)
         {
@@ -215,37 +260,56 @@ public partial class MainWindow : Window
     {
         try
         {
-            Log("--------------------------------");
-            Log("Starting Windows UI test...");
+            Log(
+                "--------------------------------"
+            );
+
+            Log(
+                "Starting Windows UI test..."
+            );
 
             string openResult =
-                WindowsTools.OpenApplication(
-                    "notepad"
-                );
+                WindowsTools
+                    .OpenApplication(
+                        "notepad"
+                    );
 
-            Log(openResult);
+            Log(
+                openResult
+            );
 
-            await Task.Delay(1200);
+            await Task.Delay(
+                1200
+            );
 
             string windows =
-                WindowsUiTools.ListWindows();
+                WindowsUiTools
+                    .ListWindows();
 
-            Log(windows);
+            Log(
+                windows
+            );
 
             string focusResult =
-                WindowsUiTools.FocusWindow(
-                    "Notepad"
-                );
+                WindowsUiTools
+                    .FocusWindow(
+                        "Notepad"
+                    );
 
-            Log(focusResult);
+            Log(
+                focusResult
+            );
 
             string typeResult =
-                WindowsUiTools.TypeText(
-                    "Notepad",
-                    "Operator AI can control Windows UI."
-                );
+                WindowsUiTools
+                    .TypeText(
+                        "Notepad",
+                        "Operator AI can control Windows UI."
+                    );
 
-            Log(typeResult);
+            Log(
+                typeResult
+            );
 
             Log(
                 "Windows UI test finished."
@@ -269,41 +333,62 @@ public partial class MainWindow : Window
     {
         try
         {
-            Log("--------------------------------");
-            Log("Testing keyboard control...");
+            Log(
+                "--------------------------------"
+            );
+
+            Log(
+                "Testing keyboard control..."
+            );
 
             string openResult =
-                WindowsTools.OpenApplication(
-                    "notepad"
-                );
+                WindowsTools
+                    .OpenApplication(
+                        "notepad"
+                    );
 
-            Log(openResult);
+            Log(
+                openResult
+            );
 
-            await Task.Delay(1200);
+            await Task.Delay(
+                1200
+            );
 
             string focusResult =
-                WindowsUiTools.FocusWindow(
-                    "Notepad"
-                );
+                WindowsUiTools
+                    .FocusWindow(
+                        "Notepad"
+                    );
 
-            Log(focusResult);
+            Log(
+                focusResult
+            );
 
             string typeResult =
-                WindowsUiTools.TypeText(
-                    "Notepad",
-                    "Keyboard automation test"
-                );
+                WindowsUiTools
+                    .TypeText(
+                        "Notepad",
+                        "Keyboard automation test"
+                    );
 
-            Log(typeResult);
+            Log(
+                typeResult
+            );
 
-            await Task.Delay(500);
+            await Task.Delay(
+                500
+            );
 
             string keyResult =
-                WindowsInputTools.PressKey(
-                    "CTRL+S"
-                );
+                WindowsInputTools
+                    .PressKey(
+                        "CTRL+S"
+                    );
 
-            Log(keyResult);
+            Log(
+                keyResult
+            );
 
             Log(
                 "Keyboard test finished."
@@ -327,18 +412,23 @@ public partial class MainWindow : Window
     {
         try
         {
-            Log("--------------------------------");
+            Log(
+                "--------------------------------"
+            );
+
             Log(
                 "Starting Save As automation test..."
             );
 
             string desktop =
                 Environment.GetFolderPath(
-                    Environment.SpecialFolder.DesktopDirectory
+                    Environment
+                        .SpecialFolder
+                        .DesktopDirectory
                 );
 
             string targetPath =
-                System.IO.Path.Combine(
+                Path.Combine(
                     desktop,
                     "agent-test.txt"
                 );
@@ -347,12 +437,12 @@ public partial class MainWindow : Window
                 $"Target file: {targetPath}"
             );
 
-            if (System.IO.File.Exists(
+            if (File.Exists(
                     targetPath))
             {
                 try
                 {
-                    System.IO.File.Delete(
+                    File.Delete(
                         targetPath
                     );
 
@@ -363,117 +453,161 @@ public partial class MainWindow : Window
                 catch (Exception deleteEx)
                 {
                     Log(
-                        $"WARNING: Could not remove existing test file: {deleteEx.Message}"
+                        "WARNING: Could not remove " +
+                        $"existing test file: {deleteEx.Message}"
                     );
                 }
             }
 
             string openResult =
-                WindowsTools.OpenApplication(
-                    "notepad"
-                );
+                WindowsTools
+                    .OpenApplication(
+                        "notepad"
+                    );
 
-            Log(openResult);
+            Log(
+                openResult
+            );
 
-            await Task.Delay(1500);
+            await Task.Delay(
+                1500
+            );
 
             string focusResult =
-                WindowsUiTools.FocusWindow(
-                    "Notepad"
-                );
+                WindowsUiTools
+                    .FocusWindow(
+                        "Notepad"
+                    );
 
-            Log(focusResult);
+            Log(
+                focusResult
+            );
 
-            await Task.Delay(300);
+            await Task.Delay(
+                300
+            );
 
             string typeResult =
-                WindowsUiTools.TypeText(
-                    "Notepad",
-                    "Operator AI save dialog test"
-                );
+                WindowsUiTools
+                    .TypeText(
+                        "Notepad",
+                        "Operator AI save dialog test"
+                    );
 
-            Log(typeResult);
+            Log(
+                typeResult
+            );
 
-            await Task.Delay(600);
+            await Task.Delay(
+                600
+            );
 
             Log(
                 "Opening Save As with CTRL+SHIFT+S..."
             );
 
             string saveAsResult =
-                WindowsInputTools.PressKey(
-                    "CTRL+SHIFT+S"
-                );
+                WindowsInputTools
+                    .PressKey(
+                        "CTRL+SHIFT+S"
+                    );
 
-            Log(saveAsResult);
+            Log(
+                saveAsResult
+            );
 
-            await Task.Delay(2000);
+            await Task.Delay(
+                2000
+            );
 
             Log(
                 "Selecting existing filename..."
             );
 
             string selectResult =
-                WindowsInputTools.PressKey(
-                    "CTRL+A"
-                );
+                WindowsInputTools
+                    .PressKey(
+                        "CTRL+A"
+                    );
 
-            Log(selectResult);
+            Log(
+                selectResult
+            );
 
-            await Task.Delay(300);
+            await Task.Delay(
+                300
+            );
 
-            System.Windows.Clipboard.SetText(
+            Clipboard.SetText(
                 targetPath
             );
 
-            await Task.Delay(200);
+            await Task.Delay(
+                200
+            );
 
             Log(
                 "Entering target file path..."
             );
 
             string pasteResult =
-                WindowsInputTools.PressKey(
-                    "CTRL+V"
-                );
+                WindowsInputTools
+                    .PressKey(
+                        "CTRL+V"
+                    );
 
-            Log(pasteResult);
+            Log(
+                pasteResult
+            );
 
-            await Task.Delay(500);
+            await Task.Delay(
+                500
+            );
 
             Log(
                 "Pressing ENTER to save..."
             );
 
             string enterResult =
-                WindowsInputTools.PressKey(
-                    "ENTER"
-                );
+                WindowsInputTools
+                    .PressKey(
+                        "ENTER"
+                    );
 
-            Log(enterResult);
+            Log(
+                enterResult
+            );
 
-            await Task.Delay(2000);
+            await Task.Delay(
+                2000
+            );
 
             Log(
                 "Verifying saved file..."
             );
 
             string verify =
-                WindowsTools.DesktopFileExists(
-                    "agent-test.txt"
-                );
-
-            Log(verify);
-
-            if (System.IO.File.Exists(
-                    targetPath))
-            {
-                string readResult =
-                    WindowsTools.ReadDesktopFile(
+                WindowsTools
+                    .DesktopFileExists(
                         "agent-test.txt"
                     );
 
-                Log(readResult);
+            Log(
+                verify
+            );
+
+            if (File.Exists(
+                    targetPath))
+            {
+                string readResult =
+                    WindowsTools
+                        .ReadDesktopFile(
+                            "agent-test.txt"
+                        );
+
+                Log(
+                    readResult
+                );
 
                 Log(
                     "SUCCESS: Save As automation completed."
@@ -499,7 +633,6 @@ public partial class MainWindow : Window
     }
 
     // =========================================================
-    // VERSION 0.6A
     // BASIC BROWSER TEST
     // =========================================================
 
@@ -509,45 +642,67 @@ public partial class MainWindow : Window
     {
         try
         {
-            Log("--------------------------------");
-            Log("Starting browser test...");
+            Log(
+                "--------------------------------"
+            );
+
+            Log(
+                "Starting browser test..."
+            );
 
             string startResult =
-                await BrowserTools.StartBrowserAsync();
+                await BrowserTools
+                    .StartBrowserAsync();
 
-            Log(startResult);
+            Log(
+                startResult
+            );
 
-            if (IsBrowserFailure(startResult))
+            if (IsBrowserFailure(
+                    startResult))
             {
                 return;
             }
 
             string navigateResult =
-                await BrowserTools.NavigateAsync(
-                    "https://example.com"
-                );
+                await BrowserTools
+                    .NavigateAsync(
+                        "https://example.com"
+                    );
 
-            Log(navigateResult);
+            Log(
+                navigateResult
+            );
 
-            if (IsBrowserFailure(navigateResult))
+            if (IsBrowserFailure(
+                    navigateResult))
             {
                 return;
             }
 
             string pageInfo =
-                await BrowserTools.GetPageInfoAsync();
+                await BrowserTools
+                    .GetPageInfoAsync();
 
-            Log(pageInfo);
+            Log(
+                pageInfo
+            );
 
             string pageText =
-                await BrowserTools.ReadPageTextAsync();
+                await BrowserTools
+                    .ReadPageTextAsync();
 
-            Log(pageText);
+            Log(
+                pageText
+            );
 
             string links =
-                await BrowserTools.ListLinksAsync();
+                await BrowserTools
+                    .ListLinksAsync();
 
-            Log(links);
+            Log(
+                links
+            );
 
             Log(
                 "SUCCESS: Browser test completed."
@@ -562,8 +717,7 @@ public partial class MainWindow : Window
     }
 
     // =========================================================
-    // VERSION 0.6B
-    // INTERACTIVE BROWSER TEST
+    // BROWSER INTERACTION TEST
     // =========================================================
 
     private async void BrowserInteractionTest_Click(
@@ -572,104 +726,74 @@ public partial class MainWindow : Window
     {
         try
         {
-            Log("--------------------------------");
+            Log(
+                "--------------------------------"
+            );
+
             Log(
                 "Starting Version 0.6B browser interaction test..."
             );
 
-            // -------------------------------------------------
-            // STEP 1
-            // Start Chromium
-            // -------------------------------------------------
-
-            Log("Starting Chromium...");
-
             string startResult =
-                await BrowserTools.StartBrowserAsync();
-
-            Log(startResult);
-
-            if (IsBrowserFailure(startResult))
-            {
-                Log(
-                    "0.6B test stopped: browser could not start."
-                );
-
-                return;
-            }
-
-            // -------------------------------------------------
-            // STEP 2
-            // Navigate to Wikipedia
-            // -------------------------------------------------
+                await BrowserTools
+                    .StartBrowserAsync();
 
             Log(
-                "Navigating to Wikipedia..."
+                startResult
             );
 
-            string navigateResult =
-                await BrowserTools.NavigateAsync(
-                    "https://www.wikipedia.org"
-                );
-
-            Log(navigateResult);
-
-            if (IsBrowserFailure(navigateResult))
+            if (IsBrowserFailure(
+                    startResult))
             {
-                Log(
-                    "0.6B test stopped: navigation failed."
-                );
-
                 return;
             }
 
-            await Task.Delay(1000);
-
-            // -------------------------------------------------
-            // STEP 3
-            // Read page
-            // -------------------------------------------------
+            string navigateResult =
+                await BrowserTools
+                    .NavigateAsync(
+                        "https://www.wikipedia.org"
+                    );
 
             Log(
-                "Reading Wikipedia page information..."
+                navigateResult
+            );
+
+            if (IsBrowserFailure(
+                    navigateResult))
+            {
+                return;
+            }
+
+            await Task.Delay(
+                1000
             );
 
             string initialPageInfo =
-                await BrowserTools.GetPageInfoAsync();
-
-            Log(initialPageInfo);
-
-            // -------------------------------------------------
-            // STEP 4
-            // Inspect interactive elements
-            // -------------------------------------------------
+                await BrowserTools
+                    .GetPageInfoAsync();
 
             Log(
-                "Inspecting interactive browser elements..."
+                initialPageInfo
             );
 
             string interactiveElements =
                 await BrowserTools
                     .ListInteractiveElementsAsync();
 
-            Log(interactiveElements);
-
-            // -------------------------------------------------
-            // STEP 5
-            // Find Wikipedia search field
-            // -------------------------------------------------
-
             Log(
-                "Finding Wikipedia search field..."
+                interactiveElements
             );
 
             string findResult =
-                await BrowserTools.FindElementsAsync(
-                    "css",
-                    "input[name='search']"
-                );
+                await BrowserTools
+                    .FindElementsAsync(
+                        "css",
+                        "input[name='search']"
+                    );
 
-            Log(findResult);
+            Log(
+                findResult
+            );
 
             string locatorType =
                 "css";
@@ -677,16 +801,9 @@ public partial class MainWindow : Window
             string locatorQuery =
                 "input[name='search']";
 
-            // -------------------------------------------------
-            // Fallback locator
-            // -------------------------------------------------
-
-            if (IsBrowserFailure(findResult))
+            if (IsBrowserFailure(
+                    findResult))
             {
-                Log(
-                    "Primary search locator failed. Trying placeholder locator..."
-                );
-
                 locatorType =
                     "placeholder";
 
@@ -694,15 +811,19 @@ public partial class MainWindow : Window
                     "Search Wikipedia";
 
                 findResult =
-                    await BrowserTools.FindElementsAsync(
-                        locatorType,
-                        locatorQuery
-                    );
+                    await BrowserTools
+                        .FindElementsAsync(
+                            locatorType,
+                            locatorQuery
+                        );
 
-                Log(findResult);
+                Log(
+                    findResult
+                );
             }
 
-            if (IsBrowserFailure(findResult))
+            if (IsBrowserFailure(
+                    findResult))
             {
                 Log(
                     "ERROR: Wikipedia search field could not be located."
@@ -711,189 +832,125 @@ public partial class MainWindow : Window
                 return;
             }
 
-            // -------------------------------------------------
-            // STEP 6
-            // Fill search field
-            // -------------------------------------------------
+            string fillResult =
+                await BrowserTools
+                    .FillAsync(
+                        locatorType,
+                        locatorQuery,
+                        "OpenAI"
+                    );
 
             Log(
-                "Filling search field with 'OpenAI'..."
+                fillResult
             );
 
-            string fillResult =
-                await BrowserTools.FillAsync(
-                    locatorType,
-                    locatorQuery,
-                    "OpenAI"
-                );
-
-            Log(fillResult);
-
-            if (IsBrowserFailure(fillResult))
+            if (IsBrowserFailure(
+                    fillResult))
             {
                 return;
             }
 
-            await Task.Delay(500);
-
-            // -------------------------------------------------
-            // STEP 7
-            // Press Enter
-            // -------------------------------------------------
-
-            Log(
-                "Pressing ENTER in search field..."
+            await Task.Delay(
+                500
             );
 
             string pressResult =
-                await BrowserTools.PressAsync(
-                    locatorType,
-                    locatorQuery,
-                    "Enter"
-                );
+                await BrowserTools
+                    .PressAsync(
+                        locatorType,
+                        locatorQuery,
+                        "Enter"
+                    );
 
-            Log(pressResult);
+            Log(
+                pressResult
+            );
 
-            if (IsBrowserFailure(pressResult))
+            if (IsBrowserFailure(
+                    pressResult))
             {
                 return;
             }
 
-            await Task.Delay(2500);
-
-            // -------------------------------------------------
-            // STEP 8
-            // Read results page information
-            // -------------------------------------------------
-
-            Log(
-                "Reading page after search..."
+            await Task.Delay(
+                2500
             );
 
             string resultPageInfo =
-                await BrowserTools.GetPageInfoAsync();
-
-            Log(resultPageInfo);
-
-            // -------------------------------------------------
-            // STEP 9
-            // Read visible results text
-            // -------------------------------------------------
-
-            string resultText =
-                await BrowserTools.ReadPageTextAsync();
-
-            Log(resultText);
-
-            // -------------------------------------------------
-            // STEP 10
-            // Test Back
-            // -------------------------------------------------
+                await BrowserTools
+                    .GetPageInfoAsync();
 
             Log(
-                "Testing browser Back..."
+                resultPageInfo
+            );
+
+            string resultText =
+                await BrowserTools
+                    .ReadPageTextAsync();
+
+            Log(
+                resultText
             );
 
             string backResult =
-                await BrowserTools.BackAsync();
-
-            Log(backResult);
-
-            await Task.Delay(1500);
-
-            // -------------------------------------------------
-            // STEP 11
-            // Test Forward
-            // -------------------------------------------------
+                await BrowserTools
+                    .BackAsync();
 
             Log(
-                "Testing browser Forward..."
+                backResult
+            );
+
+            await Task.Delay(
+                1000
             );
 
             string forwardResult =
-                await BrowserTools.ForwardAsync();
-
-            Log(forwardResult);
-
-            await Task.Delay(1500);
-
-            // -------------------------------------------------
-            // STEP 12
-            // Open second tab
-            // -------------------------------------------------
+                await BrowserTools
+                    .ForwardAsync();
 
             Log(
-                "Opening a second browser tab..."
+                forwardResult
+            );
+
+            await Task.Delay(
+                1000
             );
 
             string newTabResult =
-                await BrowserTools.NewTabAsync(
-                    "https://example.com"
-                );
-
-            Log(newTabResult);
-
-            await Task.Delay(1200);
-
-            // -------------------------------------------------
-            // STEP 13
-            // List tabs
-            // -------------------------------------------------
+                await BrowserTools
+                    .NewTabAsync(
+                        "https://example.com"
+                    );
 
             Log(
-                "Listing browser tabs..."
+                newTabResult
             );
 
             string tabs =
-                await BrowserTools.ListTabsAsync();
-
-            Log(tabs);
-
-            // -------------------------------------------------
-            // STEP 14
-            // Switch back to first tab
-            // -------------------------------------------------
+                await BrowserTools
+                    .ListTabsAsync();
 
             Log(
-                "Switching to browser tab 1..."
+                tabs
             );
 
             string switchResult =
-                await BrowserTools.SwitchTabAsync(
-                    1
-                );
-
-            Log(switchResult);
-
-            await Task.Delay(700);
-
-            // -------------------------------------------------
-            // STEP 15
-            // List tabs again
-            // -------------------------------------------------
-
-            string tabsAfterSwitch =
-                await BrowserTools.ListTabsAsync();
-
-            Log(tabsAfterSwitch);
-
-            // -------------------------------------------------
-            // STEP 16
-            // Test reload
-            // -------------------------------------------------
+                await BrowserTools
+                    .SwitchTabAsync(
+                        1
+                    );
 
             Log(
-                "Testing browser Reload..."
+                switchResult
             );
 
             string reloadResult =
-                await BrowserTools.ReloadAsync();
+                await BrowserTools
+                    .ReloadAsync();
 
-            Log(reloadResult);
-
-            // -------------------------------------------------
-            // COMPLETE
-            // -------------------------------------------------
+            Log(
+                reloadResult
+            );
 
             Log(
                 "SUCCESS: Version 0.6B browser interaction test completed."
@@ -904,6 +961,533 @@ public partial class MainWindow : Window
             Log(
                 $"BROWSER INTERACTION TEST ERROR: {ex.Message}"
             );
+        }
+    }
+
+    // =========================================================
+    // VERSION 0.6D
+    // BROWSER CONTROLS TEST
+    // =========================================================
+
+    private async void BrowserControlsTest_Click(
+        object sender,
+        RoutedEventArgs e)
+    {
+        LocalBrowserTestServer server =
+            new LocalBrowserTestServer();
+
+        string uploadFileName =
+            "operator-browser-upload-test.txt";
+
+        string desktop =
+            Environment.GetFolderPath(
+                Environment
+                    .SpecialFolder
+                    .DesktopDirectory
+            );
+
+        string uploadFullPath =
+            Path.Combine(
+                desktop,
+                uploadFileName
+            );
+
+        try
+        {
+            Log(
+                "--------------------------------"
+            );
+
+            Log(
+                "Starting Version 0.6D Browser Controls Test..."
+            );
+
+            // =================================================
+            // STEP 1
+            // START LOCAL TEST SERVER
+            // =================================================
+
+            Log(
+                "Starting local controls test server..."
+            );
+
+            string serverResult =
+                await server.StartAsync();
+
+            Log(
+                serverResult
+            );
+
+            if (IsBrowserFailure(
+                    serverResult))
+            {
+                return;
+            }
+
+            // =================================================
+            // STEP 2
+            // CREATE UPLOAD TEST FILE
+            // =================================================
+
+            Log(
+                "Creating Desktop upload test file..."
+            );
+
+            string createFileResult =
+                WindowsTools
+                    .CreateDesktopFile(
+                        uploadFileName,
+                        "Operator AI browser upload test file."
+                    );
+
+            Log(
+                createFileResult
+            );
+
+            if (IsBrowserFailure(
+                    createFileResult))
+            {
+                return;
+            }
+
+            // =================================================
+            // STEP 3
+            // START BROWSER
+            // =================================================
+
+            Log(
+                "Starting Chromium..."
+            );
+
+            string startResult =
+                await BrowserTools
+                    .StartBrowserAsync();
+
+            Log(
+                startResult
+            );
+
+            if (IsBrowserFailure(
+                    startResult))
+            {
+                return;
+            }
+
+            // =================================================
+            // STEP 4
+            // NAVIGATE TO LOCAL TEST PAGE
+            // =================================================
+
+            Log(
+                $"Navigating to local test page: {server.BaseUrl}"
+            );
+
+            string navigateResult =
+                await BrowserTools
+                    .NavigateAsync(
+                        server.BaseUrl
+                    );
+
+            Log(
+                navigateResult
+            );
+
+            if (IsBrowserFailure(
+                    navigateResult))
+            {
+                return;
+            }
+
+            // =================================================
+            // STEP 5
+            // WAIT FOR CHECKBOX
+            // =================================================
+
+            Log(
+                "Waiting for automation checkbox..."
+            );
+
+            string waitResult =
+                await BrowserTools
+                    .WaitForElementAsync(
+                        "css",
+                        "#enableAutomation",
+                        "visible",
+                        10
+                    );
+
+            Log(
+                waitResult
+            );
+
+            if (IsBrowserFailure(
+                    waitResult))
+            {
+                return;
+            }
+
+            // =================================================
+            // STEP 6
+            // CHECK CHECKBOX
+            // =================================================
+
+            Log(
+                "Checking Enable automation..."
+            );
+
+            string checkResult =
+                await BrowserTools
+                    .SetCheckedAsync(
+                        "label",
+                        "Enable automation",
+                        true
+                    );
+
+            Log(
+                checkResult
+            );
+
+            if (IsBrowserFailure(
+                    checkResult))
+            {
+                return;
+            }
+
+            // =================================================
+            // STEP 7
+            // VERIFY CHECKBOX
+            // =================================================
+
+            Log(
+                "Verifying checkbox state..."
+            );
+
+            string checkedState =
+                await BrowserTools
+                    .GetCheckedStateAsync(
+                        "label",
+                        "Enable automation"
+                    );
+
+            Log(
+                checkedState
+            );
+
+            if (
+                IsBrowserFailure(
+                    checkedState
+                )
+                ||
+                !checkedState.Contains(
+                    "checked=True",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                Log(
+                    "ERROR: Checkbox verification failed."
+                );
+
+                return;
+            }
+
+            // =================================================
+            // STEP 8
+            // SELECT OPERATIONS DEPARTMENT
+            // =================================================
+
+            Log(
+                "Selecting Operations department..."
+            );
+
+            string selectResult =
+                await BrowserTools
+                    .SelectOptionAsync(
+                        "label",
+                        "Department",
+                        "label",
+                        "Operations"
+                    );
+
+            Log(
+                selectResult
+            );
+
+            if (IsBrowserFailure(
+                    selectResult))
+            {
+                return;
+            }
+
+            // =================================================
+            // STEP 9
+            // UPLOAD DESKTOP FILE
+            // =================================================
+
+            Log(
+                $"Uploading Desktop\\{uploadFileName}..."
+            );
+
+            string uploadResult =
+                await BrowserTools
+                    .UploadDesktopFileAsync(
+                        "label",
+                        "Upload file",
+                        uploadFileName
+                    );
+
+            Log(
+                uploadResult
+            );
+
+            if (IsBrowserFailure(
+                    uploadResult))
+            {
+                return;
+            }
+
+            await Task.Delay(
+                300
+            );
+
+            // =================================================
+            // STEP 10
+            // VERIFY PAGE STATE
+            // =================================================
+
+            Log(
+                "Reading page to verify form state..."
+            );
+
+            string pageText =
+                await BrowserTools
+                    .ReadPageTextAsync();
+
+            Log(
+                pageText
+            );
+
+            if (!pageText.Contains(
+                    "Checkbox: enabled",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                Log(
+                    "ERROR: Page did not confirm checkbox state."
+                );
+
+                return;
+            }
+
+            if (!pageText.Contains(
+                    "Department: Operations",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                Log(
+                    "ERROR: Page did not confirm dropdown selection."
+                );
+
+                return;
+            }
+
+            if (!pageText.Contains(
+                    $"Uploaded: {uploadFileName}",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                Log(
+                    "ERROR: Page did not confirm uploaded filename."
+                );
+
+                return;
+            }
+
+            Log(
+                "SUCCESS: Checkbox, dropdown and upload states verified."
+            );
+
+            // =================================================
+            // STEP 11
+            // REMOVE OLD DOWNLOAD IF PRESENT
+            // =================================================
+
+            string downloadsDirectory =
+                BrowserTools
+                    .GetDownloadsDirectory();
+
+            string expectedDownload =
+                Path.Combine(
+                    downloadsDirectory,
+                    "test-report.txt"
+                );
+
+            if (File.Exists(
+                    expectedDownload))
+            {
+                try
+                {
+                    File.Delete(
+                        expectedDownload
+                    );
+
+                    Log(
+                        "Removed previous test-report.txt."
+                    );
+                }
+                catch (Exception deleteEx)
+                {
+                    Log(
+                        $"WARNING: Could not remove previous download: {deleteEx.Message}"
+                    );
+                }
+            }
+
+            // =================================================
+            // STEP 12
+            // DOWNLOAD TEST REPORT
+            // =================================================
+
+            Log(
+                "Downloading Test Report..."
+            );
+
+            string downloadResult =
+                await BrowserTools
+                    .DownloadByClickAsync(
+                        "css",
+                        "#downloadReport",
+                        "test-report.txt"
+                    );
+
+            Log(
+                downloadResult
+            );
+
+            if (IsBrowserFailure(
+                    downloadResult))
+            {
+                return;
+            }
+
+            // =================================================
+            // STEP 13
+            // VERIFY DOWNLOAD
+            // =================================================
+
+            Log(
+                "Listing Operator AI downloads..."
+            );
+
+            string downloads =
+                BrowserTools
+                    .ListDownloads();
+
+            Log(
+                downloads
+            );
+
+            if (!File.Exists(
+                    expectedDownload))
+            {
+                Log(
+                    $"ERROR: Download verification failed: {expectedDownload}"
+                );
+
+                return;
+            }
+
+            string downloadedText =
+                await File.ReadAllTextAsync(
+                    expectedDownload
+                );
+
+            Log(
+                "Downloaded file contents:"
+            );
+
+            Log(
+                downloadedText
+            );
+
+            if (!downloadedText.Contains(
+                    "Browser download system is working",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                Log(
+                    "ERROR: Downloaded report contents were not correct."
+                );
+
+                return;
+            }
+
+            // =================================================
+            // COMPLETE
+            // =================================================
+
+            Log(
+                "================================"
+            );
+
+            Log(
+                "SUCCESS: VERSION 0.6D BROWSER CONTROLS TEST PASSED."
+            );
+
+            Log(
+                "Checkbox: PASS"
+            );
+
+            Log(
+                "Dropdown: PASS"
+            );
+
+            Log(
+                "Upload: PASS"
+            );
+
+            Log(
+                "Wait: PASS"
+            );
+
+            Log(
+                "Download: PASS"
+            );
+
+            Log(
+                $"Downloaded file: {expectedDownload}"
+            );
+
+            Log(
+                "================================"
+            );
+        }
+        catch (Exception ex)
+        {
+            Log(
+                $"BROWSER CONTROLS TEST ERROR: {ex.Message}"
+            );
+        }
+        finally
+        {
+            try
+            {
+                await server.StopAsync();
+            }
+            catch
+            {
+            }
+
+            // Remove only our temporary upload test file.
+            try
+            {
+                if (File.Exists(
+                        uploadFullPath))
+                {
+                    File.Delete(
+                        uploadFullPath
+                    );
+                }
+            }
+            catch
+            {
+            }
         }
     }
 

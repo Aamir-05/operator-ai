@@ -2,28 +2,42 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Operator AI"
-        Height="820"
-        Width="1200"
-        MinHeight="680"
+        Height="850"
+        Width="1250"
+        MinHeight="700"
         MinWidth="950"
         WindowStartupLocation="CenterScreen">
 
     <Grid Margin="30">
 
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+
+            <RowDefinition
+                Height="Auto"/>
+
+            <RowDefinition
+                Height="Auto"/>
+
+            <RowDefinition
+                Height="Auto"/>
+
+            <RowDefinition
+                Height="Auto"/>
+
+            <RowDefinition
+                Height="Auto"/>
+
+            <RowDefinition
+                Height="*"/>
+
         </Grid.RowDefinitions>
 
         <!-- ================================================= -->
         <!-- HEADER                                            -->
         <!-- ================================================= -->
 
-        <StackPanel Grid.Row="0">
+        <StackPanel
+            Grid.Row="0">
 
             <TextBlock
                 Text="Operator AI"
@@ -31,7 +45,7 @@
                 FontWeight="Bold"/>
 
             <TextBlock
-                Text="Windows Agent - Version 0.6B"
+                Text="Windows Agent - Version 0.6D"
                 FontSize="15"
                 Margin="0,5,0,25"/>
 
@@ -143,6 +157,13 @@
                 Height="45"
                 Margin="0,0,10,10"
                 Click="BrowserInteractionTest_Click"/>
+
+            <Button
+                Content="Browser Controls Test"
+                Width="185"
+                Height="45"
+                Margin="0,0,10,10"
+                Click="BrowserControlsTest_Click"/>
 
         </WrapPanel>
 
