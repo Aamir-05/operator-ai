@@ -9,98 +9,229 @@ using System.Windows.Media.Imaging;
 
 namespace Operator.Desktop;
 
-public partial class PairingWindow : Window
+public partial class PairingWindow :
+    Window
 {
-    private readonly RemoteSettings _settings;
-    private CancellationTokenSource? _cancellation;
+    private readonly RemoteSettings
+        _settings;
+
+    private CancellationTokenSource?
+        _cancellation;
 
     public PairingWindow()
     {
         InitializeComponent();
-        _settings = RemoteSettings.Load();
-        Loaded += PairingWindow_Loaded;
-        Closed += PairingWindow_Closed;
+
+        _settings =
+            RemoteSettings.Load();
+
+        Loaded +=
+            PairingWindow_Loaded;
+
+        Closed +=
+            PairingWindow_Closed;
     }
 
-    private async void PairingWindow_Loaded(object sender, RoutedEventArgs e)
+    private async void PairingWindow_Loaded(
+        object sender,
+        RoutedEventArgs e)
     {
-        if (string.IsNullOrWhiteSpace(_settings.ProjectUrl))
+        if (string.IsNullOrWhiteSpace(
+                _settings.ProjectUrl))
         {
-            PairingStatusText.Text = "Configure the Operator Cloud URL in Setup first.";
+            PairingStatusText.Text =
+                "Configure the Operator Cloud URL in Setup first.";
+
             return;
         }
 
-        _cancellation = new CancellationTokenSource();
+        _cancellation =
+            new CancellationTokenSource();
 
         try
         {
-            RemoteApiClient api = new(_settings);
-            PairStartResponse session = await api.StartPairingAsync(_cancellation.Token);
+            RemoteApiClient api =
+                new RemoteApiClient(
+                    _settings
+                );
 
-            PairCodeText.Text = session.Code;
-            PairUriText.Text = session.PairUri;
-            QrImage.Source = CreateQrImage(session.PairUri);
-            PairingStatusText.Text = "Waiting for Operator AI Mobile to claim this PC...";
+            PairStartResponse session =
+                await api.StartPairingAsync(
+                    _cancellation.Token
+                );
 
-            while (!_cancellation.IsCancellationRequested)
+            PairCodeText.Text =
+                session.Code;
+
+            PairUriText.Text =
+                session.PairUri;
+
+            QrImage.Source =
+                CreateQrImage(
+                    session.PairUri
+                );
+
+            PairingStatusText.Text =
+                "Waiting for Operator AI Mobile to claim this PC...";
+
+            while (
+                !_cancellation
+                    .IsCancellationRequested
+            )
             {
-                PairPollResponse poll = await api.PollPairingAsync(
-                    session.SessionId,
-                    session.PollToken,
-                    _cancellation.Token);
+                PairPollResponse poll =
+                    await api.PollPairingAsync(
+                        session.SessionId,
+                        session.PollToken,
+                        _cancellation.Token
+                    );
 
-                if (poll.Status.Equals("paired", StringComparison.OrdinalIgnoreCase))
+                if (
+                    poll.Status.Equals(
+                        "paired",
+                        StringComparison
+                            .OrdinalIgnoreCase
+                    )
+                )
                 {
-                    if (string.IsNullOrWhiteSpace(poll.DeviceId) || string.IsNullOrWhiteSpace(poll.DeviceSecret))
-                        throw new InvalidOperationException("Pairing completed without a device credential.");
+                    if (
+                        string.IsNullOrWhiteSpace(
+                            poll.DeviceId)
+                        ||
+                        string.IsNullOrWhiteSpace(
+                            poll.DeviceSecret)
+                    )
+                    {
+                        throw new InvalidOperationException(
+                            "Pairing completed without a device credential."
+                        );
+                    }
 
-                    _settings.DeviceId = poll.DeviceId;
-                    _settings.Enabled = true;
+                    _settings.DeviceId =
+                        poll.DeviceId;
+
+                    _settings.Enabled =
+                        true;
+
                     _settings.Save();
-                    OperatorSecrets.SaveDeviceSecret(poll.DeviceId, poll.DeviceSecret);
 
-                    PairingStatusText.Text = "Paired successfully. Operator AI Mobile can now send tasks to this PC.";
-                    PairCodeText.Text = "PAIRED";
+                    OperatorSecrets
+                        .SaveDeviceSecret(
+                            poll.DeviceId,
+                            poll.DeviceSecret
+                        );
+
+                    PairingStatusText.Text =
+                        "Paired successfully. Operator AI Mobile can now send tasks to this PC.";
+
+                    PairCodeText.Text =
+                        "PAIRED";
+
                     return;
                 }
 
-                if (poll.Status.Equals("expired", StringComparison.OrdinalIgnoreCase))
+                if (
+                    poll.Status.Equals(
+                        "expired",
+                        StringComparison
+                            .OrdinalIgnoreCase
+                    )
+                )
                 {
-                    PairingStatusText.Text = "Pairing session expired. Close this window and try again.";
+                    PairingStatusText.Text =
+                        "Pairing session expired. Close this window and try again.";
+
                     return;
                 }
 
-                await Task.Delay(1500, _cancellation.Token);
+                await Task.Delay(
+                    1500,
+                    _cancellation.Token
+                );
             }
         }
-        catch (OperationCanceledException) { }
+        catch (OperationCanceledException)
+        {
+        }
         catch (Exception ex)
         {
-            PairingStatusText.Text = "Pairing error: " + ex.Message;
+            PairingStatusText.Text =
+                "Pairing error: " +
+                ex.Message;
         }
     }
 
-    private void PairingWindow_Closed(object? sender, EventArgs e)
+    private void PairingWindow_Closed(
+        object? sender,
+        EventArgs e)
     {
         _cancellation?.Cancel();
         _cancellation?.Dispose();
-        _cancellation = null;
+
+        _cancellation =
+            null;
     }
 
-    private static BitmapImage CreateQrImage(string content)
+    private static BitmapImage CreateQrImage(
+        string content)
     {
-        using QRCodeGenerator generator = new();
-        using QRCodeData data = generator.CreateQrCode(content, QRCodeGenerator.ECCLevel.Q);
-        PngByteQRCode qr = new(data);
-        byte[] png = qr.GetGraphic(10);
+        using QRCodeGenerator generator =
+            new QRCodeGenerator();
 
-        BitmapImage image = new();
-        using MemoryStream stream = new(png);
+        /*
+         * ECC M is intentionally used here instead of Q.
+         *
+         * The pairing URI is fairly long.
+         * ECC Q creates a denser QR matrix which was
+         * difficult for some phone cameras to detect
+         * when displayed on a Windows monitor.
+         *
+         * ECC M still provides good error correction
+         * while producing a less dense QR code.
+         */
+        using QRCodeData data =
+            generator.CreateQrCode(
+                content,
+                QRCodeGenerator
+                    .ECCLevel
+                    .M
+            );
+
+        PngByteQRCode qr =
+            new PngByteQRCode(
+                data
+            );
+
+        /*
+         * Generate large, sharp modules.
+         * WPF displays this using NearestNeighbor
+         * scaling so QR squares remain crisp.
+         */
+        byte[] png =
+            qr.GetGraphic(
+                16
+            );
+
+        BitmapImage image =
+            new BitmapImage();
+
+        using MemoryStream stream =
+            new MemoryStream(
+                png
+            );
+
         image.BeginInit();
-        image.CacheOption = BitmapCacheOption.OnLoad;
-        image.StreamSource = stream;
+
+        image.CacheOption =
+            BitmapCacheOption.OnLoad;
+
+        image.StreamSource =
+            stream;
+
         image.EndInit();
+
         image.Freeze();
+
         return image;
     }
 }
